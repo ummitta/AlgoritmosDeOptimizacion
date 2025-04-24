@@ -190,7 +190,7 @@ def graficar(sol, A, b, c, signo):
     plt.ylim(-2,50)
     plt.xticks(np.arange(-2,100,5))
     plt.yticks(np.arange(-2,100,5))
-
+    #asdasd
     # ploteando eje x e y
     plt.axhline(0,color="black",linewidth=1)
     plt.axvline(0,color="black",linewidth=1)

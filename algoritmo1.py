@@ -1,6 +1,8 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import random as ra
+from scipy.spatial import ConvexHull
+
 A = np.array([[1,0],
               [0,2],
               [3,2],
@@ -99,8 +101,6 @@ def FeasibleVectors(V,A,b,sign):
     return VF
 
 
-
-
 def Evaluate(VF,C):
 
     VE = np.empty((0,1),dtype=int)
@@ -163,10 +163,11 @@ print(optimizeVertex,profit)
 print(optimizeVertex)
 
 def evaluar_funciones(V, b):
-    x1 = np.linspace(-10,10,100)
+    x1 = np.linspace(-100,100,100)
     return ((b - (V[0] * x1))/V[1]), f"({b} - ({V[0]} * x))/{V[1]}"
 
 def graficar(sol, A, b, c, signo):
+    plt.grid()
     V_np = np.array(FindVertors(A, b), dtype=int)
     A_np = np.array(A)
     signo_np = np.array(signo)
@@ -175,7 +176,7 @@ def graficar(sol, A, b, c, signo):
 
     x = sol[0]
     y = sol[1]
-
+    Z_eval = c[0] * x + c[1] * y 
     # graficar en consola el punto optimo
     print("El punto optimo esta en:")
     print("---------")
@@ -183,15 +184,12 @@ def graficar(sol, A, b, c, signo):
     print("---------")
     print("| y =", int(y), "|")
     print("---------")
-    
-    # ploteando el punto optimo
-    plt.plot(x,y, 'ro')
-    plt.text(x+.1,y+.3,f"({int(x)},{int(y)}) es el punto optimo del modelo.")
+    print('al evaluar Z obtenemos:', Z_eval)
 
-    plt.xlim(-2,10)
-    plt.ylim(-2,10)
-    plt.xticks(np.arange(-2,10,1))
-    plt.yticks(np.arange(-2,10,1))
+    plt.xlim(-2,50)
+    plt.ylim(-2,50)
+    plt.xticks(np.arange(-2,100,5))
+    plt.yticks(np.arange(-2,100,5))
 
     # ploteando eje x e y
     plt.axhline(0,color="black",linewidth=1)
@@ -209,7 +207,21 @@ def graficar(sol, A, b, c, signo):
         else:
             if A[i][0] > 0 and A[i][1] > 0:
                 e = evaluar_funciones(A[i], b[i])[0]
-                plt.plot(np.linspace(-10,10,100), e, label=evaluar_funciones(A[i], b[i])[1], color="g", linestyle="--")
+                plt.plot(np.linspace(-100,100,100), e, label=evaluar_funciones(A[i], b[i])[1], color="g", linestyle="--")
+
+    hull = ConvexHull(VF)
+    for simplex in hull.simplices:
+        plt.plot(VF[simplex, 0], VF[simplex, 1], 'g--')
+    plt.fill(VF[hull.vertices, 0], VF[hull.vertices, 1], 'lightgreen', alpha=0.3)
+
+    # ploteando todos los factibles
+    for v in VF:
+        plt.plot(v[0],v[1], 'bo')
+    
+
+    # ploteando el punto optimo
+    plt.plot(x,y, 'ro')
+    plt.text(x+.1,y+.3,f"({int(x)},{int(y)}) es el punto optimo del modelo.")
 
     plt.xlabel("x1")
     plt.ylabel("x2")

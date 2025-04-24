@@ -138,7 +138,6 @@ def Encontrar_fila_pivote(tablero):
 
     
     for j in range(columnas):
-
         tablero[][j]
 
 

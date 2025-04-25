@@ -168,7 +168,7 @@ def Encontrar_fila_pivote(tablero):
 def Pivotear(tablero):
 
     print('Pivotear')
-    print(tablero)
+    #print(tablero)
     
     status = False
 
@@ -193,49 +193,72 @@ def Pivotear(tablero):
 
     print(listaParaPivotear)
 
-    print(indiceNumero,zMinimoIndex)
+    
 
     columnas = tablero.shape[1]
 
-    print(tablero)
-    zMinimo = tablero[0][zMinimoIndex]
+    #print(tablero)
+    #zMinimo = tablero[0][zMinimoIndex]
     
     print('OE')
-    print(zMinimoIndex)
+    
+
+
+    print(indiceNumero,zMinimoIndex)
     for i in listaParaPivotear:
-   
+        print(f'----i: {i}')
+        pivoteColumna = tablero[i][zMinimoIndex]
         for j in range(columnas):
+            print(f'j: {j}')
+            pivote = tablero[indiceNumero][j]
             
-            print(f'i:{i},j:{j}')
             numero = tablero[i][j]
-            pivote = tablero[zMinimoIndex][j] 
-            print(f'numero:{numero}')
-            print(f'pivote:{pivote}')
-            print(f'zMinimo{zMinimo}')
-            operacion = numero - pivote * zMinimo
+            
+            print(numero)
+            print(pivote)
+            print(pivoteColumna)
+                
+                
+            operacion = numero - (pivoteColumna * pivote )
+            print(operacion)
+
             tablero[i][j] = operacion
             
-            print('j :',j)
 
 
-    print(tablero)
+    print('pivotear',tablero)
+
+    return tablero
 
 def Simplex(A,b,c,ci,signos,objetivo):
     print("Simplex")
     AA = FormaAmpliada(A,b,c,ci,objetivo)
 
     aux = False
+
+
+    while aux != True:
+
     
-    AA = Encontrar_col_pivote(AA)
-    #print(AA)
+        AA = Encontrar_col_pivote(AA)
+        #print(AA)
 
-    AA = Encontrar_fila_pivote(AA)
+        AA = Encontrar_fila_pivote(AA)
 
-    AA = Pivotear(AA)
+        AA = Pivotear(AA)
+        
+        zFuncion = AA[0, :-1]
+        print(zFuncion)
+        numerosNegativos = np.any(zFuncion < 0)
+        print(numerosNegativos)
+        if numerosNegativos != True:
+            aux = True
 
+    return AA
 
-
-Simplex(A,b,c,ci,sign,'maximizar')
+ola = Simplex(A,b,c,ci,sign,'maximizar')
+print('ola ')
+print(ola)
 
 
 # 1 maximinar

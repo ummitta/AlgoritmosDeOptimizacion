@@ -49,7 +49,7 @@ def FormaAmpliada(A,b,c,ci,objetivo):
 
 
 
-    c = -1* c
+    c =  -1 *c
     cc = np.reshape(c,(1,2))
     zeros = np.zeros((1,len(b)),dtype=float)
     ccZeros = np.concatenate((cc,zeros),axis=1)

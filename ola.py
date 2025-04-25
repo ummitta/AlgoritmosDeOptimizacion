@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+np.set_printoptions(suppress=True, precision=2)
+
 A = np.array([[1,0],
               [0,2],
               [3,2],])
@@ -49,14 +51,14 @@ def FormaAmpliada(A,b,c,ci,objetivo):
 
     c = -1* c
     cc = np.reshape(c,(1,2))
-    zeros = np.zeros((1,len(b)),dtype=int)
+    zeros = np.zeros((1,len(b)),dtype=float)
     ccZeros = np.concatenate((cc,zeros),axis=1)
     z = np.concatenate((ccZeros,ci),axis=1)
   
 
-    indentity = np.identity(np.shape(b)[0],dtype=int)
+    indentity = np.identity(np.shape(b)[0],dtype=float)
 
-    zc = np.zeros((indentity.shape[0],1),dtype=int)
+    zc = np.zeros((indentity.shape[0],1),dtype=float)
 
     zf = np.array([zz])
 
@@ -87,7 +89,7 @@ def Encontrar_col_pivote(tablero):
 
     print(zColMinimoIndice)
 
-    Ld = np.zeros((indiceFilas,1),dtype=int)
+    Ld = np.zeros((indiceFilas,1),dtype=float)
 
 
     tablero = np.concatenate((tablero,Ld),axis=1)
@@ -130,17 +132,93 @@ def Encontrar_fila_pivote(tablero):
     columnas = tablero.shape[1]
     print(filas,columnas)
 
-
     ldNumeros = tablero[:,columnas-1]
+
     ldNumeroMayores = ldNumeros[ldNumeros>0]
+
     ldNumero =np.min(ldNumeroMayores)
-    print(ldNumero)
+
+    print(ldNumeros,ldNumero)
+    indiceNumero = np.where(ldNumeros == ldNumero)[0][0]
+    print(indiceNumero)
+
+    zMinimoIndex = np.argmin(tablero[0])
+  
 
     
-    for j in range(columnas):
-        tablero[][j]
+    valorDenominador = tablero[indiceNumero][zMinimoIndex]
+
+    
+    #tablero[indiceNumero][zMinimoIndex] = tablero[indiceNumero][zMinimoIndex] / tablero[indiceNumero][zMinimoIndex]
+
+    for i in range(columnas-1):
+        valorNumerador = tablero[indiceNumero][i]
+
+        print(f'{valorNumerador} / {valorDenominador}')
+
+        tablero[indiceNumero][i] = valorNumerador / valorDenominador
 
 
+
+    print(tablero)
+    
+
+    return tablero
+
+def Pivotear(tablero):
+
+    print('Pivotear')
+    print(tablero)
+    
+    status = False
+
+    filas = tablero.shape[0]
+    columnas = tablero.shape[1]
+
+    zMinimoIndex = np.argmin(tablero[0])
+
+    ldNumeros = tablero[:,columnas-1]
+
+    ldNumeroMayores = ldNumeros[ldNumeros>0]
+
+    ldNumero =np.min(ldNumeroMayores)
+
+    indiceNumero = np.where(ldNumeros == ldNumero)[0][0]
+
+    tablero = np.delete(tablero,-1,axis=1)
+
+    listaParaPivotear = np.arange(filas)
+    listaParaPivotear = listaParaPivotear[listaParaPivotear != indiceNumero]
+
+
+    print(listaParaPivotear)
+
+    print(indiceNumero,zMinimoIndex)
+
+    columnas = tablero.shape[1]
+
+    print(tablero)
+    zMinimo = tablero[0][zMinimoIndex]
+    
+    print('OE')
+    print(zMinimoIndex)
+    for i in listaParaPivotear:
+   
+        for j in range(columnas):
+            
+            print(f'i:{i},j:{j}')
+            numero = tablero[i][j]
+            pivote = tablero[zMinimoIndex][j] 
+            print(f'numero:{numero}')
+            print(f'pivote:{pivote}')
+            print(f'zMinimo{zMinimo}')
+            operacion = numero - pivote * zMinimo
+            tablero[i][j] = operacion
+            
+            print('j :',j)
+
+
+    print(tablero)
 
 def Simplex(A,b,c,ci,signos,objetivo):
     print("Simplex")
@@ -151,7 +229,9 @@ def Simplex(A,b,c,ci,signos,objetivo):
     AA = Encontrar_col_pivote(AA)
     #print(AA)
 
-    Encontrar_fila_pivote(AA)
+    AA = Encontrar_fila_pivote(AA)
+
+    AA = Pivotear(AA)
 
 
 

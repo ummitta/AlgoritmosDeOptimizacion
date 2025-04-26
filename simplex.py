@@ -27,58 +27,13 @@ sign = np.array([[1],[1],[1],[3],[3]])
 
 ci = np.array([[0]])
 
-
-
-# def FormaAmpliada(A,b,c,ci,signos,objetivo):
-#     zz = 0
-#     if objetivo == "maximizar":
-#         zz = 1
-#     elif objetivo == "minimizar":
-#         zz = -1
-
-#     c =  -1 *c
-
-#     print('A')
-#     print(A)
-#     print('b')
-#     print(b)
-#     print('c')
-#     print(c)
-#     print('ci')
-#     print(ci)
-#     print('objetivo')
-#     print(objetivo)
-
-#     cc = np.reshape(c,(1,2))
-#     zeros = np.zeros((1,len(b)),dtype=float)
-#     ccZeros = np.concatenate((cc,zeros),axis=1)
-#     z = np.concatenate((ccZeros,ci),axis=1)
-  
-
-#     indentity = np.identity(np.shape(b)[0],dtype=float)
-
-#     zc = np.zeros((indentity.shape[0],1),dtype=float)
-
-#     zf = np.array([zz])
-
-#     zc = np.vstack((zf,zc))
-
-    
-#     #print(np.shape(indentity))
-#     AI = np.concatenate((A,indentity),axis=1)
-#     AIb = np.concatenate((AI,b),axis=1)
-    
-#     #print(zc)
-#     A_function = np.concatenate((z,AIb),axis=0)
-
-#     A_Ampliada = np.concatenate((zc,A_function),axis=1)
-
-
-#     print("TABLERO DE FORMAAMPLIDAD")
-#     return A_Ampliada
-
+columnasLetras = ['Z']
+filasLetras = ['Z','x1','x2']
 
 def FormaAmpliada(A,b,c,ci,signos,objetivo):
+
+    global filas
+    global columnas
 
     #Creacion de columna Z
     zValor = 0
@@ -176,21 +131,40 @@ def FormaAmpliada(A,b,c,ci,signos,objetivo):
 
     tablero = np.concatenate((zColumnaZFilaVariables,ldColumna),axis=1)
 
+
+    if cantidadHolguras > 0:
+        for i in range(cantidadHolguras):
+            print(i)
+
+            holgura = 'h'+ str(i+1)
+            filasLetras.append(holgura)
+            columnasLetras.append(holgura)
+    if cantidadArtificiales > 0:
+        for i in range(cantidadArtificiales):
+            print(i)
+
+            holgura = 'a'+ str(i+1)
+            filasLetras.append(holgura)
+            columnasLetras.append(holgura)
     
-    # filas = ['Z', 'h1', 'h2','h3']
-    # columnas = ['Z','x1', 'x1', 'h1', 'h2', 'h3', 'LD']
+
+    filasLetras.append('LD')
+ 
+
     
-    # ImprimirTabla()
+    ImprimirTabla(columnasLetras,filasLetras,tablero)
     
     return tablero
 
 
 def Encontrar_col_pivote(tablero):
+    global filas
+    global columnas
     print("Encontrar_col_pivote")
 
-    filaZ = tablero[0]
+    filaZ = tablero[0, 1:-1]
     valorMinimo = np.min(filaZ)
-    indiceMinimo = np.argmin(filaZ)
+    indiceMinimo = np.argmin(filaZ) + 1
     #print(valorMinimo,indiceMinimo)
 
     filas = tablero.shape[0]
@@ -209,45 +183,10 @@ def Encontrar_col_pivote(tablero):
             
         
     tablero = np.concatenate((tablero,operatoria),axis=1)
-    print(tablero)
-
-    # zColMinimoIndice = np.argmin(tablero)
-    # indiceFilas = tablero.shape[0]
-
-    # print(zColMinimoIndice)
-
-    # Ld = np.zeros((indiceFilas,1),dtype=float)
-
-
-    # tablero = np.concatenate((tablero,Ld),axis=1)
-
-    # indiceFilas = tablero.shape[0]
-    # indiceColumna = tablero.shape[1]
-
-    # print(tablero)
-
-    # for i in range(indiceFilas):
-
-    #     valorNumerador = tablero[i][indiceColumna-2]
-    #     valorDenominador = tablero[i][zColMinimoIndice]
-
-    #     if valorDenominador != 0:
-    #         tablero[i][indiceColumna-1] = valorNumerador / valorDenominador
-            
-    #     else:
-    #         print("No se puede dividor por 0")
-    #         tablero[i][indiceColumna-1] = -1
-
-        #print(valorNumerador, valorDenominador)
-
-    #print(tablero)
-
     
-    #print(zColMinimoIndice)
-    #print(valorMinimo)
-    #print(valoresColumna)
-
-
+    filasLetras.append('Operacion')
+    ImprimirTabla(columnasLetras,filasLetras,tablero)
+    filasLetras.pop()
     return tablero
 
 
@@ -272,52 +211,20 @@ def Encontrar_fila_pivote(tablero):
 
     #print(indiceMinimoZ,indiceMinimo)
     pivote = tablero[indiceMinimo][indiceMinimoZ]
+
+    print('letra fila: ', filasLetras[indiceMinimoZ])
+    print('letra columna: ', columnasLetras[indiceMinimo])
+
+    columnasLetras[indiceMinimo] = filasLetras[indiceMinimoZ]
     for i in range(columnas-1):
 
         tablero[indiceMinimo][i] = tablero[indiceMinimo][i] / pivote 
 
-    print(tablero)
-
+   
+    filasLetras.append('Operacion')
+    ImprimirTabla(columnasLetras,filasLetras,tablero)
+    filasLetras.pop()
     return tablero
-
-
-
-    # print("fila")
-    # print(tablero)
-
-    # zMinimo = np.argmin(tablero)
-    # print(zMinimo)
-    # filas = tablero.shape[0]
-    # columnas = tablero.shape[1]
-    # print(filas,columnas)
-
-    # ldNumeros = tablero[:,columnas-1]
-
-    # ldNumeroMayores = ldNumeros[ldNumeros>0]
-
-    # ldNumero =np.min(ldNumeroMayores)
-
-    # print(ldNumeros,ldNumero)
-    # indiceNumero = np.where(ldNumeros == ldNumero)[0][0]
-    # print(indiceNumero)
-
-    # zMinimoIndex = np.argmin(tablero[0])
-  
-    # valorDenominador = tablero[indiceNumero][zMinimoIndex]
-
-    # for i in range(columnas-1):
-    #     valorNumerador = tablero[indiceNumero][i]
-
-    #     print(f'{valorNumerador} / {valorDenominador}')
-
-    #     tablero[indiceNumero][i] = valorNumerador / valorDenominador
-
-
-
-    # print(tablero)
-    
-
-    # return tablero
 
 
 
@@ -348,8 +255,8 @@ def Pivotear(tablero):
         pivoteColumna = tablero[i][indiceMinimoZ]
         for j in range(columnas-1):
 
-
-            if i == 2:
+        
+            if i == indiceMinimo:
                 break
 
 
@@ -357,138 +264,45 @@ def Pivotear(tablero):
             pivote = tablero[indiceMinimo][j]
 
             operacion = numero - (pivoteColumna * pivote)
+            #print(f'operacion: {numero} - ({pivoteColumna} * {pivote} ) = {operacion}')
             tablero[i][j] = operacion
 
     tablero = np.delete(tablero, -1, axis=1)
-    print(tablero)
+    
+    ImprimirTabla(columnasLetras,filasLetras,tablero)
+
+    
     return tablero
-            #print(i,j)
-    # status = False
 
-    # filas = tablero.shape[0]
-    # columnas = tablero.shape[1]
-
-    # zMinimoIndex = np.argmin(tablero[0])
-
-    # ldNumeros = tablero[:,columnas-1]
-
-    # ldNumeroMayores = ldNumeros[ldNumeros>0]
-
-    # ldNumero =np.min(ldNumeroMayores)
-
-    # indiceNumero = np.where(ldNumeros == ldNumero)[0][0]
-
-    # tablero = np.delete(tablero,-1,axis=1)
-
-    # listaParaPivotear = np.arange(filas)
-    # listaParaPivotear = listaParaPivotear[listaParaPivotear != indiceNumero]
-
-
-    # print(listaParaPivotear)
-
-    
-
-    # columnas = tablero.shape[1]
-
-    # #print(tablero)
-    # #zMinimo = tablero[0][zMinimoIndex]
-    
-    # print('OE')
-    
-
-
-    # print(indiceNumero,zMinimoIndex)
-    # for i in listaParaPivotear:
-    #     print(f'----i: {i}')
-    #     pivoteColumna = tablero[i][zMinimoIndex]
-    #     for j in range(columnas):
-    #         print(f'j: {j}')
-    #         pivote = tablero[indiceNumero][j]
-            
-    #         numero = tablero[i][j]
-            
-    #         print(numero)
-    #         print(pivote)
-    #         print(pivoteColumna)
-                
-                
-    #         operacion = numero - (pivoteColumna * pivote )
-    #         print(operacion)
-
-    #         tablero[i][j] = operacion
-            
-
-
-    # print('pivotear',tablero)
-
-    # return tablero
 
 def Simplex(A,b,c,ci,signos,objetivo):
     print("Simplex")
     AA = FormaAmpliada(A,b,c,ci,signos,objetivo)
 
-    filas = ['Z', 'h1', 'h2','h3']
-    columnas = ['Z','x1', 'x1', 'h1', 'h2', 'h3', 'LD']
-
-    ImprimirTabla(filas,columnas,AA)
-
-
     aux = True
 
-
-    while aux != False:
-
-    
+    while aux:
         AA = Encontrar_col_pivote(AA)
-        #print(AA)
-        
         AA = Encontrar_fila_pivote(AA)
-
-        
-
         AA = Pivotear(AA)
         
-      
-        aux = True
-        
-        zFuncion = AA[0, :-1]
-        print(zFuncion)
+        zFuncion = AA[0, 1:-1]  # Excluye Z y LD
         numerosNegativos = np.any(zFuncion < 0)
-        print(numerosNegativos)
-        
-        if numerosNegativos != True:
-            aux = True
+        aux = numerosNegativos  # Actualiza aux correctamente
 
     return AA
 
 
-def ImprimirTabla(filas,columnas,tablero):
+def ImprimirTabla(columna,filas,tablero):
 
-    datosFilas = [[fila] + list(fila_valores) for fila, fila_valores in zip(filas, tablero)] 
+    datosFilas = [[fila] + list(fila_valores) for fila, fila_valores in zip(columna, tablero)] 
 
-    encabezado = [''] + columnas
+    encabezado = [''] + filas
 
     tabla = tabulate(datosFilas, headers=encabezado, tablefmt="grid")
 
     print(tabla)
 
-# filas = ['Z', 'h1', 'h2','h3']
-# columnas = ['Z','x1', 'x1', 'h1', 'h2', 'h3', 'LD']
 
 
 simplexResultado = Simplex(A,b,c,ci,sign,'maximizar')
-
-
-
-# datosFilas = [[fila] + list(fila_valores) for fila, fila_valores in zip(filas, simplexResultado)] 
-
-# encabezado = [''] + columnas
-
-# tabla = tabulate(datosFilas, headers=encabezado, tablefmt="grid")
-
-# print(tabla)
-#print(simplexResultado)
-
-
-# 1 maximinar
-# -1 minimizar

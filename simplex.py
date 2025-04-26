@@ -156,6 +156,9 @@ def FormaAmpliada(A,b,c,ci,signos,objetivo):
     
     return tablero
 
+def Metodo_dos_fases(tablero):
+    ...
+
 
 def Encontrar_col_pivote(tablero):
     global filas
@@ -259,7 +262,6 @@ def Pivotear(tablero):
             if i == indiceMinimo:
                 break
 
-
             numero = tablero[i][j]
             pivote = tablero[indiceMinimo][j]
 
@@ -286,9 +288,9 @@ def Simplex(A,b,c,ci,signos,objetivo):
         AA = Encontrar_fila_pivote(AA)
         AA = Pivotear(AA)
         
-        zFuncion = AA[0, 1:-1]  # Excluye Z y LD
+        zFuncion = AA[0, 1:-1]  
         numerosNegativos = np.any(zFuncion < 0)
-        aux = numerosNegativos  # Actualiza aux correctamente
+        aux = numerosNegativos  
 
     return AA
 

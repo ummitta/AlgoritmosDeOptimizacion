@@ -376,8 +376,12 @@ def Metodo_dos_fases_fase_1(tablero,columnasLetras,filasLetras):
         
 
 
+def Metodo_dos_fases_fase_2(tablero):
+    ...
 
-    
+
+def Pivotear_fase_2(tablero):
+    ...
 
 
 

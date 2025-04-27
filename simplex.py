@@ -383,7 +383,8 @@ def Metodo_dos_fases_fase_2(tablero):
 def Pivotear_fase_2(tablero):
     ...
 
-
+def Metodo_dos_fases_Mixto(tablero):
+    ...
 
 
 def Simplex(A,b,c,ci,signos,objetivo):
@@ -392,8 +393,30 @@ def Simplex(A,b,c,ci,signos,objetivo):
 
 
     #Fase 1: solo si hay  artificiales y de exceso
-    tablero = Metodo_dos_fases_fase_1(AA,columnasLetras,filasLetras)
+    
+    procedimiento = ''
+    menorIgual = 0
+    mayorIgual = 0
+    for i in range(len(signos)):
+        if signos[i] == 1:
+            menorIgual += 1
+        elif signos[i] == 3:
+            mayorIgual += 1
+    
+    if menorIgual > 0 and mayorIgual > 0:
+        procedimiento = "metodo de fases mixto"
+    if menorIgual > 0 and mayorIgual == 0:
+        procedimiento = 'simplex normal'
+    if menorIgual == 0 and mayorIgual > 0:
+        procedimiento = 'metodo de dos fases normal'
+    
+    if procedimiento == 'metodo de dos fases normal':
 
+        tablero = Metodo_dos_fases_fase_1(AA,columnasLetras,filasLetras)
+        aux = True
+    if procedimiento == "metodo de fases mixto":
+        tablero = Metodo_dos_fases_Mixto(AA,columnasLetras,filasLetras)
+        aux = True
 
     aux = False
     

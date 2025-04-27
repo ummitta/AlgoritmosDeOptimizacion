@@ -10,25 +10,7 @@ epsilon = sys.float_info.epsilon
 
 np.set_printoptions(suppress=True, precision=2)
 
-A = np.array([[60,60],
-              [12,6],
-              [10,30],])
 
-b = np.array([[300],
-              [36],
-              [90]])
-
-#Porque es negativo?
-c = np.array([[0.12],[0.15]])
-#signos
-# < 0
-# <= 1
-# > 2
-# >= 3
-# != 4
-sign = np.array([[3],[3],[3],[3],[3]])
-
-ci = np.array([[0]])
 
 columnasLetras = ['Z']
 filasLetras = ['Z','x1','x2']
@@ -394,10 +376,11 @@ def Simplex(A,b,c,ci,signos,objetivo):
 
     #Fase 1: solo si hay  artificiales y de exceso
     
+    aux = True
     procedimiento = ''
     menorIgual = 0
     mayorIgual = 0
-    for i in range(len(signos)):
+    for i in range(len(signos)-len(b)):
         if signos[i] == 1:
             menorIgual += 1
         elif signos[i] == 3:
@@ -410,6 +393,8 @@ def Simplex(A,b,c,ci,signos,objetivo):
     if menorIgual == 0 and mayorIgual > 0:
         procedimiento = 'metodo de dos fases normal'
     
+    print('procedimiento ', procedimiento)
+
     if procedimiento == 'metodo de dos fases normal':
 
         tablero = Metodo_dos_fases_fase_1(AA,columnasLetras,filasLetras)
@@ -417,9 +402,6 @@ def Simplex(A,b,c,ci,signos,objetivo):
     if procedimiento == "metodo de fases mixto":
         tablero = Metodo_dos_fases_Mixto(AA,columnasLetras,filasLetras)
         aux = True
-
-    aux = False
-    
 
     while aux:
         AA = Encontrar_col_pivote(AA)
@@ -429,6 +411,7 @@ def Simplex(A,b,c,ci,signos,objetivo):
         zFuncion = AA[0, 1:-1]  
         numerosNegativos = np.any(zFuncion < 0)
         aux = numerosNegativos  
+
 
     return AA
 
@@ -443,6 +426,82 @@ def ImprimirTabla(columna,filas,tablero):
 
     print(tabla)
 
-print(epsilon)
 
-simplexResultado = Simplex(A,b,c,ci,sign,'minimizar')
+#EJEMPLO DE MAXIMIZAR 
+
+A = np.array([[1,0],
+              [0,2],
+              [3,2],])
+
+b = np.array([[4],
+              [12],
+              [18]])
+
+#Porque es negativo?
+c = np.array([[30000],[50000]])
+#signos
+# < 0
+# <= 1
+# > 2
+# >= 3
+# != 4
+sign = np.array([[1],[1],[1],[3],[3]])
+
+ci = np.array([[0]])
+
+simplexResultado = Simplex(A,b,c,ci,sign,'maximizar')
+
+print("####################################")
+print("""
+
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣤⣤⣤⣤⣤⣶⣦⣤⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀ 
+⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⡿⠛⠉⠙⠛⠛⠛⠛⠻⢿⣿⣷⣤⡀⠀⠀⠀⠀⠀ 
+⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⠋⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⠈⢻⣿⣿⡄⠀⠀⠀⠀ 
+⠀⠀⠀⠀⠀⠀⠀⣸⣿⡏⠀⠀⠀⣠⣶⣾⣿⣿⣿⠿⠿⠿⢿⣿⣿⣿⣄⠀⠀⠀ 
+⠀⠀⠀⠀⠀⠀⠀⣿⣿⠁⠀⠀⢰⣿⣿⣯⠁⠀⠀⠀⠀⠀⠀⠀⠈⠙⢿⣷⡄⠀ 
+⠀⠀⣀⣤⣴⣶⣶⣿⡟⠀⠀⠀⢸⣿⣿⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣷⠀ 
+⠀⢰⣿⡟⠋⠉⣹⣿⡇⠀⠀⠀⠘⣿⣿⣿⣿⣷⣦⣤⣤⣤⣶⣶⣶⣶⣿⣿⣿⠀ 
+⠀⢸⣿⡇⠀⠀⣿⣿⡇⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃⠀ 
+⠀⣸⣿⡇⠀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠉⠻⠿⣿⣿⣿⣿⡿⠿⠿⠛⢻⣿⡇⠀⠀ 
+⠀⣿⣿⠁⠀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣧⠀⠀ 
+⠀⣿⣿⠀⠀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⠀⠀ 
+⠀⣿⣿⠀⠀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⠀⠀ 
+⠀⢿⣿⡆⠀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⡇⠀⠀ 
+⠀⠸⣿⣧⡀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⠃⠀⠀ 
+⠀⠀⠛⢿⣿⣿⣿⣿⣇⠀⠀⠀⠀⠀⣰⣿⣿⣷⣶⣶⣶⣶⠶⠀⢠⣿⣿⠀⠀⠀ 
+⠀⠀⠀⠀⠀⠀⠀⣿⣿⠀⠀⠀⠀⠀⣿⣿⡇⠀⣽⣿⡏⠁⠀⠀⢸⣿⡇⠀⠀⠀ 
+⠀⠀⠀⠀⠀⠀⠀⣿⣿⠀⠀⠀⠀⠀⣿⣿⡇⠀⢹⣿⡆⠀⠀⠀⣸⣿⠇⠀⠀⠀ 
+⠀⠀⠀⠀⠀⠀⠀⢿⣿⣦⣄⣀⣠⣴⣿⣿⠁⠀⠈⠻⣿⣿⣿⣿⡿⠏⠀⠀⠀⠀ 
+⠀⠀⠀⠀⠀⠀⠀⠈⠛⠻⠿⠿⠿⠿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+
+
+""")
+
+columnasLetras = ['Z']
+filasLetras = ['Z','x1','x2']
+
+
+#EJEMPLO DE MINIMIZAR 
+
+
+A1 = np.array([[60,60],
+              [12,6],
+              [10,30],])
+
+b1 = np.array([[300],
+              [36],
+              [90]])
+
+#Porque es negativo?
+c1 = np.array([[0.12],[0.15]])
+#signos
+# < 0
+# <= 1
+# > 2
+# >= 3
+# != 4
+sign1 = np.array([[3],[3],[3],[3],[3]])
+
+ci1 = np.array([[0]])
+
+simplexResultado = Simplex(A1,b1,c1,ci1,sign1,'minimizar')

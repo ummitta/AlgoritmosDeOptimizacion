@@ -10,8 +10,6 @@ epsilon = sys.float_info.epsilon
 
 np.set_printoptions(suppress=True, precision=2)
 
-
-
 columnasLetras = ['Z']
 filasLetras = ['Z','x1','x2']
 
@@ -143,11 +141,6 @@ def FormaAmpliada(A,b,c,ci,signos,objetivo):
     
     return tablero
 
-
-
-
-
-
 def Encontrar_col_pivote(tablero):
     global filas
     global columnas
@@ -156,8 +149,7 @@ def Encontrar_col_pivote(tablero):
     filaZ = tablero[0, 1:-1]
     valorMinimo = np.min(filaZ)
     indiceMinimo = np.argmin(filaZ) + 1
-    #print(valorMinimo,indiceMinimo)
-
+    print('valor minimo',valorMinimo)
     filas = tablero.shape[0]
     operatoria = np.zeros((filas,1),dtype=float)
     columna = tablero.shape[1]
@@ -184,7 +176,6 @@ def Encontrar_col_pivote(tablero):
     ImprimirTabla(columnasLetras,filasLetras,tablero)
     filasLetras.pop()
     return tablero
-
 
 def Encontrar_fila_pivote(tablero):
 
@@ -228,9 +219,6 @@ def Encontrar_fila_pivote(tablero):
     ImprimirTabla(columnasLetras,filasLetras,tablero)
     filasLetras.pop()
     return tablero
-
-
-
 
 def Pivotear(tablero):
 
@@ -290,7 +278,8 @@ def Pivotear(tablero):
 
 def Metodo_dos_fases_fase_1(tablero,columnasLetras,filasLetras):
     print("Fase 1 de metodo de dos fases")
-
+    global filas
+    global columnas
     artificiales = 0
     holguras = 0
     cocientesFuncion = 0
@@ -353,44 +342,44 @@ def Metodo_dos_fases_fase_1(tablero,columnasLetras,filasLetras):
         numerosNegativos = np.any(zFila < 0)
         print(zFila)
         aux = numerosNegativos
+    return tablero
 
 
-def Metodo_dos_fases_fase_2(tablero, columnasLetras, filasLetras):
+def Metodo_dos_fases_fase_2(tablero):
+    global filasLetras
+    global columnasLetras
+    global filas
+    global columnas
+    print('comienza fase2')
     # Eliminar columnas de variables artificiales
-    print('columnas', filasLetras)
-    indices_a_eliminar = [i for i, letra in enumerate(filasLetras) if letra.startswith('a')]
-    print('indices', indices_a_eliminar)
-    for e in indices_a_eliminar:
-        tablero = np.delete(tablero, e, axis=1)
-    # Eliminamos las columnas del tablero
-    
-    ImprimirTabla(tablero, columnasLetras, filasLetras)
-    # También eliminamos las letras correspondientes
-    columnasLetras = [letra for i, letra in enumerate(filasLetras) if i not in indices_a_eliminar]
+    indices = [i for i, letra in enumerate(filasLetras) if letra.startswith('a')]
+    print('Indices que voy a borrar:', indices)
+
+    if indices:  # Solo si hay columnas a borrar
+        tablero = np.delete(tablero, indices, axis=1)  # Eliminar todas las columnas artificiales de una sola
+        filasLetras = [letra for i, letra in enumerate(filasLetras) if i not in indices]
 
     # Ahora reconstruir la fila Z (función objetivo)
     
     zFila = np.zeros(tablero.shape[1])
+    print('Tablero con zeros', indices)
     # Restar combinación lineal de las variables básicas
-    for i in range(1, tablero.shape[0]):
-        var_basica = filasLetras[i]
-        if var_basica.startswith("x"):
-            idx = int(var_basica[1])  # ejemplo: x1 --> 1
-            coef = c[idx-1][0]
-            zFila[1:] -= coef * tablero[i,1:]
+    for i in range(len(c1)):
+        zFila[i+1] = c1[i][0]
 
     tablero[0] = zFila
 
-    ImprimirTabla(columnasLetras, filasLetras, tablero, 'Inicio Fase 2 - después de eliminar artificiales')
-    # Aplicar simplex normal
+    ImprimirTabla(columnasLetras, filasLetras, tablero)
+    # aplicar reduccion gaussiana para hacer 0 los coeficientes x1 y x2
+
     aux = True
+
     while aux:
         tablero = Encontrar_col_pivote(tablero)
         tablero = Encontrar_fila_pivote(tablero)
-        print('holamundo')
         tablero = Pivotear(tablero)
-
-        zFuncion = tablero[0, 1:-1]
+        
+        zFuncion = tablero[0, 1:-1]  
         aux = np.any(zFuncion < 0)
 
     return tablero
@@ -401,10 +390,9 @@ def Pivotear_fase_2(tablero):
 def Metodo_dos_fases_Mixto(tablero):
     ...
 
-
-def Simplex(A,b,c,ci,signos,objetivo):
+def Simplex(A, b, c, ci, signos, objetivo):
     print("Simplex")
-    AA = FormaAmpliada(A,b,c,ci,signos,objetivo)
+    AA = FormaAmpliada(A, b, c, ci, signos, objetivo)
 
     #Fase 1: solo si hay  artificiales y de exceso
     aux = False
@@ -416,19 +404,17 @@ def Simplex(A,b,c,ci,signos,objetivo):
             menorIgual += 1
         elif signos[i] == 3:
             mayorIgual += 1
-    
+
     if menorIgual > 0 and mayorIgual > 0:
         procedimiento = "metodo de fases mixto"
     if menorIgual > 0 and mayorIgual == 0:
         procedimiento = 'simplex normal'
     if menorIgual == 0 and mayorIgual > 0:
         procedimiento = 'metodo de dos fases normal'
-    
-    print('procedimiento ', procedimiento)
 
     if procedimiento == 'metodo de dos fases normal':
-        AA = Metodo_dos_fases_fase_1(AA,columnasLetras,filasLetras)
-        AA = Metodo_dos_fases_fase_2(AA,columnasLetras,filasLetras)
+        AA = Metodo_dos_fases_fase_1(AA, columnasLetras, filasLetras)
+        AA = Metodo_dos_fases_fase_2(AA)
 
     if procedimiento == "metodo de fases mixto":
         AA = Metodo_dos_fases_Mixto(AA,columnasLetras,filasLetras)
@@ -442,9 +428,7 @@ def Simplex(A,b,c,ci,signos,objetivo):
         AA = Pivotear(AA)
         
         zFuncion = AA[0, 1:-1]  
-        numerosNegativos = np.any(zFuncion < 0)
-        aux = numerosNegativos  
-
+        aux = np.any(zFuncion < 0) 
 
     return AA
 
@@ -516,10 +500,9 @@ filasLetras = ['Z','x1','x2']
 
 #EJEMPLO DE MINIMIZAR 
 
-
 A1 = np.array([[60,60],
               [12,6],
-              [10,30],])
+              [10,30]])
 
 b1 = np.array([[300],
               [36],

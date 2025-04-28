@@ -25,6 +25,7 @@ def FormaAmpliada(A,b,c,ci,signos,objetivo):
         c = -1*c
     elif objetivo == "minimizar":
         zValor = -1
+        
 
 
     #Creacion de columna z para ver si es maximizacion o minizacion
@@ -135,8 +136,6 @@ def FormaAmpliada(A,b,c,ci,signos,objetivo):
 
     filasLetras.append('LD')
  
-
-    
     ImprimirTabla(columnasLetras,filasLetras,tablero)
     
     return tablero
@@ -211,10 +210,10 @@ def Encontrar_fila_pivote(tablero):
 
     columnasLetras[indiceMinimo] = filasLetras[indiceMinimoZ]
     for i in range(columnas-1):
+        if pivote < epsilon:
+            print('division por cero!')
+        else: tablero[indiceMinimo][i] = tablero[indiceMinimo][i] / pivote 
 
-        tablero[indiceMinimo][i] = tablero[indiceMinimo][i] / pivote 
-
-   
     filasLetras.append('Operacion')
     ImprimirTabla(columnasLetras,filasLetras,tablero)
     filasLetras.pop()
@@ -224,7 +223,6 @@ def Pivotear(tablero):
 
     print('Pivotear')
 
-    
     filaZ = tablero[0][:-2]
     #print(f'fila z : {filaZ}')
     valorMinimoZ = np.min(filaZ)
@@ -274,6 +272,7 @@ def Pivotear(tablero):
     
     ImprimirTabla(columnasLetras,filasLetras,tablero)
 
+    
     return tablero
 
 def Metodo_dos_fases_fase_1(tablero,columnasLetras,filasLetras):
@@ -344,7 +343,6 @@ def Metodo_dos_fases_fase_1(tablero,columnasLetras,filasLetras):
         aux = numerosNegativos
     return tablero
 
-
 def Metodo_dos_fases_fase_2(tablero):
     global filasLetras
     global columnasLetras
@@ -368,24 +366,30 @@ def Metodo_dos_fases_fase_2(tablero):
         zFila[i+1] = c1[i][0]
 
     tablero[0] = zFila
+    tablero[0][0] = -1
+    #while (tablero[0][1] > 0) or (tablero[0][2] > 0):
+     #   tablero[0][1] = tablero[0][1] + (tablero[0][1] * -1)
+     #   tablero[0][2] = tablero[0][2] + (tablero[0][2] * -1)
 
-    ImprimirTabla(columnasLetras, filasLetras, tablero)
+    
     # aplicar reduccion gaussiana para hacer 0 los coeficientes x1 y x2
-
-    aux = True
-
-    while aux:
-        tablero = Encontrar_col_pivote(tablero)
-        tablero = Encontrar_fila_pivote(tablero)
-        tablero = Pivotear(tablero)
+    ImprimirTabla(columnasLetras, filasLetras,tablero)
+    AjustarFilaZ(tablero, columnasLetras, filasLetras)
+    ImprimirTabla(columnasLetras, filasLetras,tablero)
         
-        zFuncion = tablero[0, 1:-1]  
-        aux = np.any(zFuncion < 0)
-
     return tablero
 
-def Pivotear_fase_2(tablero):
-    ...
+def AjustarFilaZ(tablero, columnasLetras, filasLetras):
+
+    # Primero, identificamos las variables básicas en la solución actual
+    for j in range(1, tablero.shape[1]):
+        if filasLetras[j] in columnasLetras:  # Si la columna j corresponde a una variable básica
+            if filasLetras[j].startswith('x'):
+                fila_basica = columnasLetras.index(filasLetras[j])  # Índice de la fila de la variable básica
+                print('fila_basica:',fila_basica)
+            tablero[0] += tablero[fila_basica] * tablero[0, j] * -1  # Actualizar RHS (última columna)
+
+    return tablero
 
 def Metodo_dos_fases_Mixto(tablero):
     ...

@@ -44,18 +44,23 @@ def FormaAmpliada(A,b,c,ci,signos,objetivo):
     cantidadExceso = cantidadArtificiales * 2
 
     cantidadHolgurasArtificiales = cantidadHolguras + cantidadExceso
+
+    cantidadCoeficientes = np.shape(A)[0]-1
     
-    variables = np.zeros((np.shape(b)[0], 2 + cantidadHolgurasArtificiales))
-    separacion = 2
+    variables = np.zeros((np.shape(b)[0], cantidadCoeficientes + cantidadHolgurasArtificiales))
+    separacion = cantidadCoeficientes
+
+    print("Varibles tamaño columna: ", np.shape(A)[1])
 
     for i in range(np.shape(variables)[0]):
 
         for j in range(np.shape(b)[0]-1):
             #print(variables)
             
+            for k in range(np.shape(A)[1]):
 
-            variables[i][0] = A[i][0]
-            variables[i][1] = A[i][1]
+                variables[i][k] = A[i][k]
+            
 
             if signos[i] == 1:
                 variables[i][separacion] = 1
@@ -84,7 +89,7 @@ def FormaAmpliada(A,b,c,ci,signos,objetivo):
     
 
     for i in range(0,variables.shape[0]):
-        for j in range(2,variables.shape[1]):
+        for j in range(cantidadCoeficientes,variables.shape[1]):
             
             
 
@@ -99,7 +104,9 @@ def FormaAmpliada(A,b,c,ci,signos,objetivo):
                 zFila = np.concatenate((zFila,aux),axis = 1)
                 break
 
-
+    print("zfila: \n", zFila)
+    print("Variables: \n", variables)
+    
     
 
     #Creacion columna LD
@@ -116,14 +123,14 @@ def FormaAmpliada(A,b,c,ci,signos,objetivo):
     tablero = np.concatenate((zColumnaZFilaVariables,ldColumna),axis=1)
 
 
-    if cantidadHolguras > 0:
+    if cantidadHolguras > 0 and cantidadArtificiales == 0:
         for i in range(cantidadHolguras):
             print(i)
 
             holgura = 'h'+ str(i+1)
             filasLetras.append(holgura)
             columnasLetras.append(holgura)
-    if cantidadArtificiales > 0:
+    if cantidadArtificiales > 0 and cantidadHolguras == 0:
         for i in range(cantidadArtificiales):
             print(i)
 
@@ -132,6 +139,24 @@ def FormaAmpliada(A,b,c,ci,signos,objetivo):
             filasLetras.append(exceso)
             filasLetras.append(artificial)
             columnasLetras.append(artificial)
+
+    if cantidadArtificiales > 0 and cantidadHolguras > 0:
+        for i in range(cantidadArtificiales):
+            print(i)
+
+            artificial = 'a'+ str(i+1)
+            exceso = 'e'+str(i+1)
+            filasLetras.append(exceso)
+            filasLetras.append(artificial)
+            columnasLetras.append(artificial)
+        
+        for i in range(cantidadHolguras):
+            print(i)
+
+            holgura = 'h'+ str(i+1)
+            filasLetras.append(holgura)
+            columnasLetras.append(holgura)
+
     
 
     filasLetras.append('LD')
@@ -391,8 +416,9 @@ def AjustarFilaZ(tablero, columnasLetras, filasLetras):
 
     return tablero
 
-def Metodo_dos_fases_Mixto(tablero):
-    ...
+def Metodo_dos_fases_Mixto(tablero,columnasLetras,filasLetras,signos):
+    print("Comienzo fase dos mixto")
+
 
 def Simplex(A, b, c, ci, signos, objetivo):
     print("Simplex")
@@ -421,7 +447,7 @@ def Simplex(A, b, c, ci, signos, objetivo):
         AA = Metodo_dos_fases_fase_2(AA)
 
     if procedimiento == "metodo de fases mixto":
-        AA = Metodo_dos_fases_Mixto(AA,columnasLetras,filasLetras)
+        AA = Metodo_dos_fases_Mixto(AA,columnasLetras,filasLetras,signos)
 
     if procedimiento == "simplex normal":
         aux = True
@@ -498,11 +524,13 @@ print("""
 
 """)
 
-columnasLetras = ['Z']
-filasLetras = ['Z','x1','x2']
+
 
 
 #EJEMPLO DE MINIMIZAR 
+
+columnasLetras = ['Z']
+filasLetras = ['Z','x1','x2']
 
 A1 = np.array([[60,60],
               [12,6],
@@ -525,3 +553,61 @@ sign1 = np.array([[3],[3],[3],[3],[3]])
 ci1 = np.array([[0]])
 
 simplexResultado = Simplex(A1,b1,c1,ci1,sign1,'minimizar')
+
+print("####################################")
+print("""
+
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣤⣤⣤⣤⣤⣶⣦⣤⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀ 
+⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⡿⠛⠉⠙⠛⠛⠛⠛⠻⢿⣿⣷⣤⡀⠀⠀⠀⠀⠀ 
+⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⠋⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⠈⢻⣿⣿⡄⠀⠀⠀⠀ 
+⠀⠀⠀⠀⠀⠀⠀⣸⣿⡏⠀⠀⠀⣠⣶⣾⣿⣿⣿⠿⠿⠿⢿⣿⣿⣿⣄⠀⠀⠀ 
+⠀⠀⠀⠀⠀⠀⠀⣿⣿⠁⠀⠀⢰⣿⣿⣯⠁⠀⠀⠀⠀⠀⠀⠀⠈⠙⢿⣷⡄⠀ 
+⠀⠀⣀⣤⣴⣶⣶⣿⡟⠀⠀⠀⢸⣿⣿⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣷⠀ 
+⠀⢰⣿⡟⠋⠉⣹⣿⡇⠀⠀⠀⠘⣿⣿⣿⣿⣷⣦⣤⣤⣤⣶⣶⣶⣶⣿⣿⣿⠀ 
+⠀⢸⣿⡇⠀⠀⣿⣿⡇⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃⠀ 
+⠀⣸⣿⡇⠀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠉⠻⠿⣿⣿⣿⣿⡿⠿⠿⠛⢻⣿⡇⠀⠀ 
+⠀⣿⣿⠁⠀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣧⠀⠀ 
+⠀⣿⣿⠀⠀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⠀⠀ 
+⠀⣿⣿⠀⠀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⠀⠀ 
+⠀⢿⣿⡆⠀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⡇⠀⠀ 
+⠀⠸⣿⣧⡀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⠃⠀⠀ 
+⠀⠀⠛⢿⣿⣿⣿⣿⣇⠀⠀⠀⠀⠀⣰⣿⣿⣷⣶⣶⣶⣶⠶⠀⢠⣿⣿⠀⠀⠀ 
+⠀⠀⠀⠀⠀⠀⠀⣿⣿⠀⠀⠀⠀⠀⣿⣿⡇⠀⣽⣿⡏⠁⠀⠀⢸⣿⡇⠀⠀⠀ 
+⠀⠀⠀⠀⠀⠀⠀⣿⣿⠀⠀⠀⠀⠀⣿⣿⡇⠀⢹⣿⡆⠀⠀⠀⣸⣿⠇⠀⠀⠀ 
+⠀⠀⠀⠀⠀⠀⠀⢿⣿⣦⣄⣀⣠⣴⣿⣿⠁⠀⠈⠻⣿⣿⣿⣿⡿⠏⠀⠀⠀⠀ 
+⠀⠀⠀⠀⠀⠀⠀⠈⠛⠻⠿⠿⠿⠿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+
+
+""")
+
+# EJEMPLO DE Maximizar 
+
+columnasLetras = ['Z']
+filasLetras = ['Z','x1','x2','x3','x4']
+
+A2 = np.array([[1,0,1,0],
+              [0,1,0,1],
+              [2,-1,2,-1],
+              [1,1,0,0],
+              [0,0,1,1]])
+
+b2 = np.array([[40],
+              [70],
+              [0],
+              [180],
+              [45]])
+
+#Porque es negativo?
+c2 = np.array([[1500],[1400],[1600],[1450]])
+#signos
+# < 0
+# <= 1
+# > 2
+# >= 3
+# != 4
+sign2 = np.array([[3],[3],[3],[1],[1],[3],[3],[3],[3]])
+
+ci2 = np.array([[0]])
+
+simplexResultado = Simplex(A2,b2,c2,ci2,sign2,'maximizar')
+

@@ -2,30 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import random as ra
 from scipy.spatial import ConvexHull
-
-A = np.array([[1,0],
-              [0,2],
-              [3,2],
-              [1,0],
-              [0,1]])
-
-
-b = np.array([[4],
-              [12],
-              [18],
-              [0],
-              [0]])
-
-c = np.array([[30000],[50000]])
-#signos
-# < 0
-# <= 1
-# > 2
-# >= 3
-# != 4
-sign = np.array([[1],[1],[1],[3],[3]])
-
-print(len(b))
+import sympy as sp
 
 def FindVertors(A,b):
 
@@ -144,43 +121,25 @@ def Optime(objective,Ve,V):
 
     return optimizeVertex,aux 
 
-V = FindVertors(A,b)
-
-print(len(V))
-print(len(b))
-VF = FeasibleVectors(V,A,b,sign)
-print("factibles: ",VF)
-
-Ve = Evaluate(VF,c)
-print(Ve)
-
-optimizeVertex,profit =Optime('maximizar',Ve,VF)
-
-print(optimizeVertex,profit)
-
-
-
-print(optimizeVertex)
-
 def evaluar_funciones(V, b):
     x1 = np.linspace(-100,100,100)
     return ((b - (V[0] * x1))/V[1]), f"({b} - ({V[0]} * x))/{V[1]}"
 
-def graficar(sol, A, b, c, signo):
+def graficar(sol, A, b, c, signo,VF):
     plt.grid()
-    V_np = np.array(FindVertors(A, b), dtype=int)
-    A_np = np.array(A)
-    signo_np = np.array(signo)
-    b_np = np.array(b)
-    c_np = np.array(c)
+
 
     x = sol[0]
     y = sol[1]
-    Z_eval = c[0] * x + c[1] * y 
+    print('c: ',c)
+    print('c[0]: ', c[0][0])
+    print('c[1]: ', c[0][1])
+    Z_eval = c[0][0] * x + c[0][1] * y 
     # graficar en consola el punto optimo
+
     print("El punto optimo esta en:")
     print("---------")
-    print("| x =", int(x), "|")
+    print("| x =", int(x), '|')
     print("---------")
     print("| y =", int(y), "|")
     print("---------")
@@ -188,8 +147,8 @@ def graficar(sol, A, b, c, signo):
 
     plt.xlim(-2,50)
     plt.ylim(-2,50)
-    plt.xticks(np.arange(-2,100,5))
-    plt.yticks(np.arange(-2,100,5))
+    plt.xticks(np.arange(-2,50,2))
+    plt.yticks(np.arange(-2,50,2))
     #asdasd
     # ploteando eje x e y
     plt.axhline(0,color="black",linewidth=1)
@@ -201,9 +160,12 @@ def graficar(sol, A, b, c, signo):
 
         if A[i][0] == 0 or A[i][1] == 0:
             if A[i][0] == 0:
-                plt.axhline(y=b[i]/A[i][1], color=colors[i], label=f"y = {b[i]/A[i][1]}", linestyle="--")
+                yGrafico = int(b[i]/A[i][1])
+                
+                print("yGrafico: ", yGrafico)
+                plt.axhline(y=b[i]/A[i][1], color=colors[i], label=f"y = {int(b[i]/A[i][1])}", linestyle="--")
             if A[i][1] == 0:
-                plt.axvline(x=b[i]/A[i][0], color=colors[i], label=f"x = {b[i]/A[i][0]}", linestyle="--")
+                plt.axvline(x=b[i]/A[i][0], color=colors[i], label=f"x = {int(b[i]/A[i][0])}", linestyle="--")
         else:
             if A[i][0] > 0 and A[i][1] > 0:
                 e = evaluar_funciones(A[i], b[i])[0]
@@ -223,6 +185,13 @@ def graficar(sol, A, b, c, signo):
     plt.plot(x,y, 'ro')
     plt.text(x+.1,y+.3,f"({int(x)},{int(y)}) es el punto optimo del modelo.")
 
+    funcion_objetivo = f"Z = {c[0][0]} * {x} + {c[0][1]} * {y} = {c[0][0] * x + c[0][1] * y}"
+
+
+
+    # Agregar a la leyenda
+    plt.plot([], [], label=funcion_objetivo, color='black', linestyle='-')
+
     plt.xlabel("x1")
     plt.ylabel("x2")
     plt.title("Solución Optima")
@@ -230,4 +199,141 @@ def graficar(sol, A, b, c, signo):
     plt.show()
 
 
-graficar(optimizeVertex,A,b,c,sign)
+def ModeloProgramacionLinea(coeficientes,restricciones,coeficienteFuncionObjetivo,signos,modo):
+
+    V = FindVertors(coeficientes,restricciones)
+    VF = FeasibleVectors(V,coeficientes,restricciones,signos)
+    Ve = Evaluate(VF,c)
+    optimizeVertex,profit =Optime(modo,Ve,VF)
+    print('VF: ', VF)
+    print('Ve: ', Ve)
+
+
+    graficar(optimizeVertex,coeficientes,restricciones,coeficienteFuncionObjetivo,signos,VF)
+
+
+
+def parser(restriccion_str):
+
+    x1, x2 = sp.symbols('x1 x2')
+    
+    expresion = sp.sympify(restriccion_str)
+    
+    # Separo LHS y RHS
+    ladoIzquierdo, ladoDerecho = expresion.lhs, expresion.rhs
+
+    if expresion.has(sp.LessThan):
+        signo = 1
+    elif expresion.has(sp.GreaterThan):
+        signo = 3
+    else:
+        signo = 5
+
+    coeficiente1 = ladoIzquierdo.coeff(x1, 1)
+    coeficiente2 = ladoIzquierdo.coeff(x2, 1)
+    
+    return [float(coeficiente1), float(coeficiente2)], signo, float(ladoDerecho)
+
+def parse_obj(obj_str):
+
+    x1, x2 = sp.symbols('x1 x2')
+    expresion = sp.sympify(obj_str)
+    coeficiente1 = expresion.coeff(x1, 1)
+    coeficiente2 = expresion.coeff(x2, 1)
+    return [float(coeficiente1), float(coeficiente2)]
+
+def menu():
+    A = np.empty((0, 2))
+    b = np.empty((0, 1))
+    signos = np.empty((0,1))
+    
+
+    n = int(input("Cantidad de restricciones: "))
+    if n <= 0:
+        print("Las restricciones deben ser > 0")
+        return
+    
+    print("Ingresa cada restricción, por ej: 2*x1 + 3*x2 <= 300")
+    for i in range(n):
+        línea = input(f"> ")
+        coefs, signo, rhs = parser(línea)
+        print(coefs, signo, rhs)
+
+        A = np.vstack([A, coefs])
+        print("A: ", A)
+        b = np.vstack([b, [rhs]])
+        print("b: ", b)
+        print("signos: ", signos)
+        print("signo: ", signo)
+        signos = np.vstack([signos, [signo]])
+        print("signos: ", signos)
+
+    A = np.vstack([A,[1,0]])
+    A = np.vstack([A,[0,1]])
+
+    b = np.vstack([b,[0]])
+    b = np.vstack([b,[0]])
+
+    signos = np.vstack([signos,[3]])
+    signos = np.vstack([signos,[3]])
+
+    # 2) Leer función objetivo
+    print("\nAhora ingresa la función objetivo, ej: 30000*x1 + 4000*x2")
+    obj_str = input("> ")
+    c = np.array(parse_obj(obj_str)).reshape(1, -1)
+
+    print("\nAhora el tipo de modo 'maximizar' o 'minimizar' ")
+
+    modo = input(">")
+
+
+
+    # 3) Salida final
+    print("\nMatriz A (coeficientes de restricciones):")
+    print(A)
+    print("\nVector b (lado derecho de restricciones):")
+    print(b)
+    print("\nSignos de las restricciones:")
+    print(signos)
+    print("\nVector c (coeficientes de la función objetivo):")
+    print(c)
+
+    ModeloProgramacionLinea(A,b,c,signos,modo)
+
+
+
+
+
+A = np.array([[1,0],
+              [0,2],
+              [3,2],
+              [1,0],
+              [0,1]])
+
+
+b = np.array([[4],
+              [12],
+              [18],
+              [0],
+              [0]])
+
+c = np.array([[30000],[50000]])
+#signos
+# < 0
+# <= 1
+# > 2
+# >= 3
+# != 4
+sign = np.array([[1],[1],[1],[3],[3]])
+
+#modos
+#maximizar
+#minimizar
+
+
+menu()
+
+#ModeloProgramacionLinea(A,b,c,sign,'maximizar')
+
+
+

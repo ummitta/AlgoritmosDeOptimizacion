@@ -273,7 +273,7 @@ def Pivotear(tablero):
 
     print(f"coordendas: {indiceMinimo} ,{indiceMinimoZ} ")
 
-    ImprimirTabla(columnasLetras,filasLetras,tablero)
+    #ImprimirTabla(columnasLetras,filasLetras,tablero)
     
     for i in range(filas):
         pivoteColumna = tablero[i][indiceMinimoZ]
@@ -418,8 +418,156 @@ def AjustarFilaZ(tablero, columnasLetras, filasLetras):
 
 def Metodo_dos_fases_Mixto(tablero,columnasLetras,filasLetras,signos):
     print("Comienzo fase dos mixto")
+    ImprimirTabla(columnasLetras,filasLetras,tablero)   
+    
+    # cantidadRestricciones = np.shape(tablero)[0] -1
+    # cantidadArtificial = np.count_nonzero(signos == 3)
+    # cantidadRestriccionesArtificiales = cantidadArtificial - cantidadRestricciones
+    # print(cantidadRestriccionesArtificiales)
+
+    # for i in range(1,cantidadRestriccionesArtificiales+1):
+
+    #     tablero[i] *= -1
+    
+
+    
+    #tablero = Metodo_dos_fases_fase_1(tablero,columnasLetras,filasLetras)
+    
+    #creacion de coordenadas de las varaibles artificiales
+
+    # artificialesFilas = []
+    # artificialesColumna = []
+    # cantidadCocientes = 0
+    # for i in range(0,len(columnasLetras)):
+    #     print('letras: ',columnasLetras[i])
+    #     if columnasLetras[i][0] == 'a':
+    #         artificialesFilas.append(i)
 
 
+    # for i in range(0,len(filasLetras)):
+    #     if filasLetras[i][0] == 'a':
+    #         artificialesColumna.append(i)
+
+    # print(artificialesFilas)
+    # print(artificialesColumna)
+    cantidadCocientes = 0
+
+
+    cocientesFuncion = 0
+    for letra in filasLetras:
+
+        if letra.startswith('x'):
+            cocientesFuncion += 1
+
+
+
+    zfuncion = np.zeros((1, len(tablero[0])), dtype=float)
+
+    for i in range(1,cocientesFuncion+1):
+        zfuncion[0][i] = tablero[0][i]
+        tablero[0][i] = 0
+  
+
+    print("fila z: ", zfuncion)
+
+
+
+    artificialesFilas = []
+    artificialesColumna = []
+    for i in range(0,len(columnasLetras)):
+        print('letras: ',columnasLetras[i])
+        if columnasLetras[i][0] == 'a':
+            artificialesFilas.append(i)
+
+    for i in range(0,len(filasLetras)):
+        if filasLetras[i][0] == 'a':
+            artificialesColumna.append(i)
+
+    print(artificialesFilas)
+    print(artificialesColumna)
+
+    for i in range(1,len(artificialesFilas)+1):
+        for j in range(1,np.shape(tablero)[1]):
+            numero = tablero[0][j]
+            pivote = tablero[i][j]
+            print(f"operacion: {numero} + ({pivote} * -1)")
+            
+            tablero[0][j] = numero + (pivote * -1)
+            print(i,j)
+
+
+    ImprimirTabla(columnasLetras,filasLetras,tablero)
+
+
+    #Comparador para decidir cual columna usar si todos son iguales
+    todoIguales = True
+    filaCocientes = tablero[0,1:cocientesFuncion+1]
+    print(filaCocientes)
+    for i in range(1,cocientesFuncion+1):
+        aux = tablero[0][i]
+
+        for j in range(0,cocientesFuncion):
+            #print(filaCocientes[j])
+            if aux != filaCocientes[j]:
+                 todoIguales = False
+
+        
+    print("iguales ", i)
+    print("Todos iguales ", todoIguales)
+        #if zfuncion[0][i] 
+
+    todoIguales = True
+    print(zfuncion)
+    columnaPivote = 0
+
+    if todoIguales:
+        for i in range(1,len()):
+            ...
+        
+    #Recuerda ahora creaer un pivote,fila, y coso solamente para si son iwales
+
+
+    # tablero = Encontrar_col_pivote(tablero)      
+    # tablero = Encontrar_fila_pivote(tablero)
+    # print("Pivoteo Terminao")
+    # tablero = Pivotear(tablero)
+
+    # tablero = Encontrar_col_pivote(tablero)      
+    # tablero = Encontrar_fila_pivote(tablero)
+    # print("Pivoteo Terminao")
+    # tablero = Pivotear(tablero)
+
+
+
+    # tablero = np.delete(tablero,artificialesColumna,axis=1)
+    
+    # filasLetras = [valor for i, valor in enumerate(filasLetras) if i not in artificialesColumna]
+
+    # #print(tablero)
+    # ImprimirTabla(columnasLetras,filasLetras,tablero)
+
+    # print(np.shape(tablero)[1])
+    # print("fila z: ", zfuncion)
+    # for i in range(1,np.shape(tablero)[1]):
+    #     tablero[0][i] = zfuncion[0][i]
+
+    # print("TABLA ANTES DEL SIMPLEX NORMAL")
+    # ImprimirTabla(columnasLetras,filasLetras,tablero)
+    # tablero = Encontrar_fila_pivote(tablero)
+    # tablero = Encontrar_col_pivote(tablero)    
+    # tablero = Pivotear(tablero)
+
+    # tablero = Encontrar_fila_pivote(tablero)
+    # tablero = Encontrar_col_pivote(tablero)    
+    # tablero = Pivotear(tablero)
+
+    # tablero = Encontrar_fila_pivote(tablero)
+    # tablero = Encontrar_col_pivote(tablero)    
+    # tablero = Pivotear(tablero)
+
+    # tablero = Encontrar_fila_pivote(tablero)
+    # tablero = Encontrar_col_pivote(tablero)    
+    # tablero = Pivotear(tablero)
 def Simplex(A, b, c, ci, signos, objetivo):
     print("Simplex")
     AA = FormaAmpliada(A, b, c, ci, signos, objetivo)
@@ -580,34 +728,34 @@ print("""
 
 """)
 
-# EJEMPLO DE Maximizar 
+# # EJEMPLO DE Maximizar 
 
-columnasLetras = ['Z']
-filasLetras = ['Z','x1','x2','x3','x4']
+# columnasLetras = ['Z']
+# filasLetras = ['Z','x1','x2','x3','x4']
 
-A2 = np.array([[1,0,1,0],
-              [0,1,0,1],
-              [2,-1,2,-1],
-              [1,1,0,0],
-              [0,0,1,1]])
+# A2 = np.array([[1,0,1,0],
+#               [0,1,0,1],
+#               [2,-1,2,-1],
+#               [1,1,0,0],
+#               [0,0,1,1]])
 
-b2 = np.array([[40],
-              [70],
-              [0],
-              [180],
-              [45]])
+# b2 = np.array([[40],
+#               [70],
+#               [0],
+#               [180],
+#               [45]])
 
-#Porque es negativo?
-c2 = np.array([[1500],[1400],[1600],[1450]])
-#signos
-# < 0
-# <= 1
-# > 2
-# >= 3
-# != 4
-sign2 = np.array([[3],[3],[3],[1],[1],[3],[3],[3],[3]])
+# #Porque es negativo?
+# c2 = np.array([[1500],[1400],[1600],[1450]])
+# #signos
+# # < 0
+# # <= 1
+# # > 2
+# # >= 3
+# # != 4
+# sign2 = np.array([[3],[3],[1],[1],[1],[3],[3],[3],[3]])
 
-ci2 = np.array([[0]])
+# ci2 = np.array([[0]])
 
-simplexResultado = Simplex(A2,b2,c2,ci2,sign2,'maximizar')
+# simplexResultado = Simplex(A2,b2,c2,ci2,sign2,'maximizar')
 

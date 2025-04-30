@@ -1,4 +1,4 @@
 # Ignorar entorno virtual
 venv/
 mi_entorno/
-.vscode
+.vscode/

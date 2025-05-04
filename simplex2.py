@@ -169,6 +169,9 @@ def Encontrar_col_pivote(tablero,posicionColumna=0):
     global filas
     global columnas
     print("Encontrar_col_pivote")
+    print(tablero)
+
+    print(tablero[0, 1:-1])
 
     filaZ = tablero[0, 1:-1]
     valorMinimo = np.min(filaZ)
@@ -180,6 +183,8 @@ def Encontrar_col_pivote(tablero,posicionColumna=0):
         valorMinimo = np.min(filaZ)
         indiceMinimo = np.argmin(filaZ) + 1
         print('valor minimo',valorMinimo)
+
+        
 
     if posicionColumna != 0:
         print("posicion columna distinta de cero")
@@ -219,7 +224,8 @@ def Encontrar_col_pivote(tablero,posicionColumna=0):
     valorPositivos = operatoria[indexPositivo,0]
     valorMinimoMayor = valorPositivos[np.argmin(valorPositivos)]
     indiceFila = np.where(operatoria == valorMinimoMayor)[0]
-    print("indiceFila ", indiceFila)
+    indiceFila = indiceFila[0]
+    print("test indiceFila ", indiceFila)
 
     
 
@@ -233,7 +239,7 @@ def Encontrar_col_pivote(tablero,posicionColumna=0):
     filasLetras.append('Operacion')
     ImprimirTabla(columnasLetras,filasLetras,tablero)
     filasLetras.pop()
-    return tablero
+    return tablero,indiceFila
 
 def Encontrar_fila_pivote(tablero,filaPivote=0):
 
@@ -244,22 +250,37 @@ def Encontrar_fila_pivote(tablero,filaPivote=0):
     valorMinimoZ = np.min(filaZ)
     print(valorMinimoZ)
     indiceMinimoZ = np.argmin(filaZ)
+
+    indiceMinimo = 0
+
     filas = tablero.shape[0]
     columnas = tablero.shape[1]
 
-    columnaOperacion = tablero[:, -1]
+    if filaPivote == 0:
+            
 
-    print('columna Operacion 1 ', columnaOperacion)
-    valorExcluir = -1
-    columnaOperacionFiltrada = columnaOperacion[columnaOperacion != valorExcluir]
-    columnaOperacionFiltrada = np.delete(columnaOperacionFiltrada,0,axis=0)
-    columnaOperacionFiltrada = columnaOperacionFiltrada[columnaOperacionFiltrada > 0]
-    valorMinimo = np.min(columnaOperacionFiltrada)
 
-    indiceMinimo = np.where(columnaOperacion == valorMinimo)[0][0]
+            columnaOperacion = tablero[:, -1]
 
-    print(f'indiceMinimoZ: {indiceMinimoZ}')
-    print(f'indiceMinimo: {indiceMinimo}')
+            print('columna Operacion 1 ', columnaOperacion)
+            valorExcluir = -1
+            columnaOperacionFiltrada = columnaOperacion[columnaOperacion != valorExcluir]
+            columnaOperacionFiltrada = np.delete(columnaOperacionFiltrada,0,axis=0)
+            columnaOperacionFiltrada = columnaOperacionFiltrada[columnaOperacionFiltrada > 0]
+            valorMinimo = np.min(columnaOperacionFiltrada)
+
+            indiceMinimo = np.where(columnaOperacion == valorMinimo)[0][0]
+
+
+    if filaPivote != 0:
+        print("filaPivote != 0")
+        indiceMinimo = filaPivote
+
+
+
+    print("indiceMinimo: ", indiceMinimo)
+    # print(f'indiceMinimoZ: {indiceMinimoZ}')
+    # print(f'indiceMinimo: {indiceMinimo}')
     pivote = tablero[indiceMinimo][indiceMinimoZ]
 
     print(pivote)
@@ -268,6 +289,11 @@ def Encontrar_fila_pivote(tablero,filaPivote=0):
 
 
     columnasLetras[indiceMinimo] = filasLetras[indiceMinimoZ]
+
+    columnasLen = tablero.shape[0] -1
+    if filaPivote != 0:
+        columnasLen -= indiceMinimo
+    
     for i in range(columnas-1):
         if pivote < epsilon:
             print('division por cero!')
@@ -276,15 +302,20 @@ def Encontrar_fila_pivote(tablero,filaPivote=0):
     filasLetras.append('Operacion')
     ImprimirTabla(columnasLetras,filasLetras,tablero)
     filasLetras.pop()
-    return tablero
 
-def Pivotear(tablero):
+    print("indiceMinimo ", indiceMinimo)
+    return tablero,indiceMinimo 
+
+
+def Pivotear(tablero,filaPivote=0,columna=0):
 
     print('Pivotear')
 
     filaZ = tablero[0][:-2]
     #print(f'fila z : {filaZ}')
     valorMinimoZ = np.min(filaZ)
+
+    
     indiceMinimoZ = np.argmin(filaZ)
     filas = tablero.shape[0]
     columnas = tablero.shape[1]
@@ -301,6 +332,13 @@ def Pivotear(tablero):
 
     
     indiceMinimo = np.where(columnaOperacion == valorMinimo)[0][0]
+
+    if columna != 0:
+        indiceMinimoZ = columna
+
+    if filaPivote != 0:
+        indiceMinimo = filaPivote
+
 
     print('valorMinimo: ', valorMinimo)
     print('indiceMinimo: ', indiceMinimo)
@@ -331,8 +369,8 @@ def Pivotear(tablero):
     
     ImprimirTabla(columnasLetras,filasLetras,tablero)
 
-    
-    return tablero
+    aux = 0
+    return tablero,aux
 
 def Metodo_dos_fases_fase_1(tablero,columnasLetras,filasLetras):
     print("Fase 1 de metodo de dos fases")
@@ -388,13 +426,14 @@ def Metodo_dos_fases_fase_1(tablero,columnasLetras,filasLetras):
               
         
                 tablero[0][j] = operacion
+    auxValor = 0
     aux = True
     while aux:
 
-        tablero = Encontrar_col_pivote(tablero)
-        tablero = Encontrar_fila_pivote(tablero)
+        tablero,auxValor = Encontrar_col_pivote(tablero)
+        tablero,auxValor = Encontrar_fila_pivote(tablero)
     
-        tablero = Pivotear(tablero)
+        tablero,auxValor = Pivotear(tablero)
 
         zFila = tablero[0, 1:-1]
         numerosNegativos = np.any(zFila < 0)
@@ -572,9 +611,52 @@ def Metodo_dos_fases_Mixto(tablero,columnasLetras,filasLetras,signos):
     print(columnaPivote) 
     ImprimirTabla(columnasLetras,filasLetras,tablero)
 
-    tablero = Encontrar_col_pivote(tablero,columnaPivote)
+    tablero,indiceColumna = Encontrar_col_pivote(tablero,columnaPivote)
     # tablero = Encontrar_fila_pivote(tablero,filaPivote)
     print("test ")
+    print("indiceColumna: ", indiceColumna)
+    tablero,filaPivote = Encontrar_fila_pivote(tablero,indiceColumna)
+
+    print("antes de pivotear ", tablero)
+    tablero,aux = Pivotear(tablero,filaPivote,indiceColumna)
+    print("test")
+    print("despues de pivotear ", filaPivote,indiceColumna)
+
+    
+    tablero, indiceColumna = Encontrar_col_pivote(tablero)
+
+    tablero,filaPivote = Encontrar_fila_pivote(tablero)
+
+    tablero,aux = Pivotear(tablero)
+
+
+    tablero, indiceColumna = Encontrar_col_pivote(tablero)
+
+    tablero,filaPivote = Encontrar_fila_pivote(tablero)
+
+    tablero,aux = Pivotear(tablero)
+
+    tablero[0] = zfuncion
+
+    ImprimirTabla(columnasLetras,filasLetras,tablero)
+    
+    EliminarColumnasArtificiales(tablero)
+    #tablero, filaPivote = Encontrar_fila_pivote(tablero)
+
+    aux = True
+    while aux:
+
+        tablero,auxValor = Encontrar_col_pivote(tablero)
+        tablero,auxValor = Encontrar_fila_pivote(tablero)
+    
+        tablero,auxValor = Pivotear(tablero)
+
+        zFila = tablero[0, 1:-1]
+        numerosNegativos = np.any(zFila < 0)
+        print(zFila)
+        aux = numerosNegativos
+    return tablero
+
     #tablero = Pivotear(tablero)
 
     # tablero = Encontrar_col_pivote(tablero)
@@ -625,6 +707,27 @@ def Metodo_dos_fases_Mixto(tablero,columnasLetras,filasLetras,signos):
     # tablero = Pivotear(tablero)
 
 
+def EliminarColumnasArtificiales(tablero):
+
+    print("Eliminar Columnas Artificiales")
+
+    print(filasLetras)
+    artificialesColumna = []
+    for i in range(0,len(filasLetras)):
+         if filasLetras[i][0] == 'a':
+             artificialesColumna.append(i) 
+
+    print(artificialesColumna)
+
+    tablero = np.delete(tablero, artificialesColumna,axis=1)
+
+    #for i in range(0,len(artificialesColumna)):
+    #    tablero = np.delete(tablero,artificialesColumna[i],axis=1)
+
+
+    
+    ImprimirTabla(columnasLetras,filasLetras,tablero)
+
 def Simplex(A, b, c, ci, signos, objetivo):
     print("Simplex")
     AA = FormaAmpliada(A, b, c, ci, signos, objetivo)
@@ -657,10 +760,11 @@ def Simplex(A, b, c, ci, signos, objetivo):
     if procedimiento == "simplex normal":
         aux = True
 
+    auxValor = 0
     while aux:
-        AA = Encontrar_col_pivote(AA)
-        AA = Encontrar_fila_pivote(AA)
-        AA = Pivotear(AA)
+        AA,auxValor = Encontrar_col_pivote(AA)
+        AA,auxValor = Encontrar_fila_pivote(AA)
+        AA,auxValor = Pivotear(AA)
         
         zFuncion = AA[0, 1:-1]  
         aux = np.any(zFuncion < 0) 

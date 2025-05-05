@@ -71,50 +71,20 @@ def FormaAmpliada(A,b,c,ci,signos,objetivo):
 
                 break 
 
-    #Creacion de la fila funcion
-
-    zFila = np.zeros((1,c.shape[0]),dtype=float)
-
-
-    #Si hay algun >= se vuelven ceros los coeficientes (se va a poner en cero en el metodo de dos fases)
-
-    # if cantidadArtificiales == 0:
-    for i in range(c.shape[0]):
-        zFila[0][i] = c[i][0]
-    
-
-    for i in range(0,variables.shape[0]):
-        for j in range(cantidadCoeficientes,variables.shape[1]):
-            
-            
-
-            if variables[i][j] == -1 and variables[i][j+1] == 1:
-                aux = np.array([[0,1]])
-                zFila = np.concatenate((zFila,aux),axis = 1)
-                break
-    
-            if variables[i][j] == 1:
-                aux = np.array([[0]])
-
-                zFila = np.concatenate((zFila,aux),axis = 1)
-                break
-
-    print("zfila: \n", zFila)
-    print("Variables: \n", variables)
-    
-    
-
     #Creacion columna LD
     ldColumna = np.concatenate((ci,b),axis = 0)
 
-
-
+    zFila = np.zeros((1, variables.shape[1]))  # Misma cantidad de columnas que variables
+    zFila[0, :c.shape[1]] = c.flatten()  # Copiar coeficientes de c
     zFilaVariables = np.concatenate((zFila,variables),axis=0)
-
 
     zColumnaZFilaVariables = np.concatenate((zColumna,zFilaVariables),axis=1)
     #print(zColumnaZFilaVariables)
+    #Creacion de la fila funcion
+    if zColumnaZFilaVariables.shape[0] > ldColumna.shape[0]:
+        ldColumna = np.vstack([ldColumna, np.zeros((zColumnaZFilaVariables.shape[0] - ldColumna.shape[0], ldColumna.shape[1]))])
 
+    
     tablero = np.concatenate((zColumnaZFilaVariables,ldColumna),axis=1)
 
 

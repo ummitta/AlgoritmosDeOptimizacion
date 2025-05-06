@@ -9,7 +9,7 @@ epsilon = sys.float_info.epsilon
 np.set_printoptions(suppress=True, precision=2)
 
 columnasLetras = ['Z']
-filasLetras = ['Z','x1','x2']
+filasLetras = ['Z']
 
 def FormaAmpliada(A,b,c,ci,signos,objetivo):
     global filas, columnas
@@ -28,6 +28,8 @@ def FormaAmpliada(A,b,c,ci,signos,objetivo):
     variablesBasicas = np.zeros((b.shape[0],1),dtype=float)
     zColumna = np.vstack((zValor,variablesBasicas))
     
+    cantidadFuncion = c.size
+
     
     #Creacion de matriz de coeficiente, y los posibles signos
     signosLimite = signos[:A.shape[0]]
@@ -44,6 +46,11 @@ def FormaAmpliada(A,b,c,ci,signos,objetivo):
     
     variables = np.zeros((np.shape(b)[0], cantidadCoeficientes + cantidadHolgurasArtificiales))
     separacion = cantidadCoeficientes
+
+
+    for i in range(1,cantidadFuncion+1):
+        coeficienteFuncion = 'x' + str(i)
+        filasLetras.append(coeficienteFuncion)
 
     print("Varibles tamaño columna: ", np.shape(A)[1])
 
@@ -403,6 +410,12 @@ def Metodo_dos_fases_fase_1(tablero,columnasLetras,filasLetras):
         numerosNegativos = np.any(zFila < 0)
         print(zFila)
         aux = numerosNegativos
+
+    print("Antes de terminar metodo dos fase 1 normal")
+    print(filaWOriginal)
+
+    tablero[0] = filaWOriginal
+
     return tablero
 
 def Metodo_dos_fases_fase_2(tablero):
@@ -411,6 +424,35 @@ def Metodo_dos_fases_fase_2(tablero):
     global filas
     global columnas
     print('comienza fase2')
+
+
+    cantidadCocientes = 1
+    print("filasLetras: ", filasLetras)
+    for i in range(len(filasLetras)):
+        if filasLetras[i].startswith('x'):
+            cantidadCocientes += 1
+            print("fila letras seleccionandas: ", filasLetras[i])
+    
+    print("primera parte metodo fase _fase 2")
+    print(tablero)
+    print("cantidadCocientes ", cantidadCocientes)
+    
+    c1 = tablero[0, 1:int(cantidadCocientes)] 
+    print("test tablero solo los numeros: ", tablero[0, 1:3])
+    print("test tablero toda fila : ", tablero[0])
+
+
+
+    print("C11 antes lista,  ", c1)
+
+    c1 = c1.tolist()
+
+    print("cantidadCocientes ", cantidadCocientes)
+    print("C11 despues lista,  ", c1)
+
+    tablero[0] = 0
+    tablero[1,1] = -1
+
     # Eliminar columnas de variables artificiales
     indices = [i for i, letra in enumerate(filasLetras) if letra.startswith('a')]
     print('Indices que voy a borrar:', indices)
@@ -420,12 +462,18 @@ def Metodo_dos_fases_fase_2(tablero):
         filasLetras = [letra for i, letra in enumerate(filasLetras) if i not in indices]
 
     # Ahora reconstruir la fila Z (función objetivo)
+
     
     zFila = np.zeros(tablero.shape[1])
     print('Tablero con zeros', indices)
+    print("tablero antes de la cantidad de cocientes: ", tablero)
+
+    print("tablero: \n", tablero )
+    
+    
     # Restar combinación lineal de las variables básicas
     for i in range(len(c1)):
-        zFila[i+1] = c1[i][0]
+        zFila[i+1] = c1[i]
 
     tablero[0] = zFila
     tablero[0][0] = -1
@@ -744,75 +792,119 @@ def ImprimirTabla(columna,filas,tablero):
 
     print(tabla)
 
-def parser(restriccion_str):
-    x1, x2 = sp.symbols('x1 x2')
-    expresion = sp.sympify(restriccion_str)
-    # Separo LHS y RHS
+def parser(restriccion_str, cantidadCoeficientes):
+    variables = sp.symbols(f'x1:{cantidadCoeficientes + 1}')  # x1 hasta x{cantidadCoeficientes}
+
+
+    try:
+        expresion = sp.sympify(restriccion_str)
+    except Exception as e:
+        raise ValueError(f"la restricción mal escrita: {e}")
+
+    if not hasattr(expresion, 'rel_op'):
+        raise ValueError("la restricción debe contener un signo de desigualdad (<=, >=)")
+
+
+
+
     ladoIzquierdo, ladoDerecho = expresion.lhs, expresion.rhs
 
-    if expresion.has(sp.LessThan):
+    if expresion.rel_op == '<=':
         signo = 1
-    elif expresion.has(sp.GreaterThan):
+    elif expresion.rel_op == '>=':
         signo = 3
-    else:
+    elif expresion.rel_op == '==':
         signo = 5
-
-    coeficiente1 = ladoIzquierdo.coeff(x1, 1)
-    coeficiente2 = ladoIzquierdo.coeff(x2, 1)
+    else:
+        raise ValueError("Signo de relacion no valido")
     
-    return [float(coeficiente1), float(coeficiente2)], signo, float(ladoDerecho)
+    # Verificar si el lado izquierdo todos los coeficientes son ceroos
+    if all(ladoIzquierdo.coeff(var) == 0 for var in variables):
+        if float(ladoDerecho) != 0:
+            raise ValueError("Restricción inconsistente porque (0 ≠ signo).")
+        else:
+            print("la restricción es redundante (0 = 0).")    
 
-def parse_obj(obj_str):
-    x1, x2 = sp.symbols('x1 x2')
+    coeficientes = [float(ladoIzquierdo.coeff(var)) for var in variables]
+    return coeficientes, signo, float(ladoDerecho)
+
+def parse_obj(obj_str, cantidadCoeficientes):
+    variables = sp.symbols(f'x1:{cantidadCoeficientes + 1}')
     expresion = sp.sympify(obj_str)
-    coeficiente1 = expresion.coeff(x1, 1)
-    coeficiente2 = expresion.coeff(x2, 1)
-    return [float(coeficiente1), float(coeficiente2)]
+    coeficientes = [float(expresion.coeff(var)) for var in variables]
+
+    if all(c == 0 for c in coeficientes):
+        raise ValueError("la función objetivo no pueden set todos ceros")
+
+    return coeficientes
 
 def menu():
 
-    A = np.empty((0, 2))
+    
     b = np.empty((0, 1))
     signos = np.empty((0,1))
-    ci = np.empty((0,1))
+    ci = np.array([[0]])
      
-    n = int(input("Cantidad de restricciones: "))
-    if n <= 0:
-        print("Las restricciones deben ser > 0")
+    try:
+        n = int(input("Cantidad de restricciones: "))
+        if n <= 0:
+            print("las restricciones tienen que ser > 0")
+            return
+
+        m = int(input("¿Cuántas variables (x) tiene cada restricción? "))
+        if m <= 0:
+            print("tiene que ser mayor a cero")
+            return
+    except ValueError:
+        print("la entrada es no es correcta tienes que ingresar numeros")
         return
+    
+    A = np.empty((0, m))
     
     print("Ingresa cada restricción, por ej: 2*x1 + 3*x2 <= 300")
     for i in range(n):
         línea = input(f"> ")
-        coefs, signo, rhs = parser(línea)
-        print(coefs, signo, rhs)
-
+        try:
+            coefs, signo, rhs = parser(línea, m)
+        except ValueError as err:
+            print("Tienes que ingresar una rectriccion valida")
+            return
+ 
         A = np.vstack([A, coefs])
-        print("A: ", A)
+   
         b = np.vstack([b, [rhs]])
-        print("b: ", b)
-        print("signos: ", signos)
-        print("signo: ", signo)
+
         signos = np.vstack([signos, [signo]])
-        print("signos: ", signos)
 
-    A = np.vstack([A,[1,0]])
-    A = np.vstack([A,[0,1]])
 
-    b = np.vstack([b,[0]])
-    b = np.vstack([b,[0]])
+    print("A: ", A)
+    print("b: ", b)
+    print("signos: ", signos)
+    # A = np.vstack([A,[1,0]])
+    # A = np.vstack([A,[0,1]])
 
-    signos = np.vstack([signos,[3]])
-    signos = np.vstack([signos,[3]])
+    # b = np.vstack([b,[0]])
+    # b = np.vstack([b,[0]])
+
+    for _ in range(A.shape[1]):
+        signos = np.vstack([signos, [3]])
 
     # 2) Leer función objetivo
     print("\nAhora ingresa la función objetivo, ej: 30000*x1 + 4000*x2")
     obj_str = input("> ")
-    c = np.array(parse_obj(obj_str)).reshape(1, -1)
+    try:
+        c = np.array(parse_obj(obj_str, m)).reshape(1, -1)
+    except ValueError as err:
+        print("Tienes que ingresar un funcion objetivo valida")
+        return
 
     print("\nAhora el tipo de modo 'maximizar' o 'minimizar' ")
 
     modo = input(">")
+
+    if modo not in ["maximizar", "minimizar"]:
+        print("tienes que ingresar un modo valido 'maximizar' o 'minimizar'")
+        return
 
     print("\nMatriz A (coeficientes de restricciones):")
     print(A)
@@ -822,7 +914,9 @@ def menu():
     print(signos)
     print("\nVector c (coeficientes de la función objetivo):")
     print(c)
-    return Simplex(A,b,c,ci,signos,'maximizar')
+    print("Vector ci ")
+    print(ci)
+    return Simplex(A,b,c,ci,signos,modo)
 
 #simplexResultado = Simplex(A,b,c,ci,sign,'maximizar')
 

@@ -29,3 +29,7 @@ Test
 0*x1 + 0*x2 + 1*x3 + 1*x4 <= 45
 
 1500*x1 + 1400*x2 + 1600*x3 + 1450*x4 
+
+
+para copiar control + c 
+para pegar en la terminal control + shift + v

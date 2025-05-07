@@ -11,106 +11,84 @@ columnasLetras = ['Z','x1','x2']
 filasLetras = ['Z']
 
 def FormaAmpliada(A, b, c, ci, signos, objetivo, filasLetras, columnasLetras):
-    #Creacion de columna Z
-    zValor = 0
-    if objetivo == "maximizar":
+    """
+    Construye la tabla ampliada para el método simplex.
+
+    A: matriz de coeficientes (shape: m x n)
+    b: vector de términos independientes (shape: m,)
+    c: vector de coeficientes de la función objetivo (shape: n,)
+    ci: array con valor inicial de Z (shape: 1,)
+    signos: vector que indica tipo de restricción (1=<=, 2=>=, 3=igual)
+    objetivo: 'maximizar' o 'minimizar'
+    filasLetras: lista de etiquetas para filas (variables básicas)
+    columnasLetras: lista con etiquetas iniciales de columnas (variables originales)
+    Returns: tablero ampliado (numpy.ndarray)
+    """
+    # 1) Preparar columna Z (columna de la función objetivo)
+    if objetivo == 'maximizar':
         zValor = 1
-
-        c = -1*c
-    elif objetivo == "minimizar":
+        c = -1 * c
+    else:
         zValor = -1
-        
-    #Creacion de columna z para ver si es maximizacion o minizacion
-    
-    variablesBasicas = np.zeros((b.shape[0],1),dtype=float)
-    zColumna = np.vstack((zValor, variablesBasicas))
-    
-    #Creacion de matriz de coeficiente, y los posibles signos
 
-    signosLimite = signos[:A.shape[0]]
+    m = b.shape[0]  # número de restricciones
+    variablesBasicas = np.zeros((m, 1), dtype=float)
+    zColumna = np.vstack(([zValor], variablesBasicas))  # shape (m+1, 1)
 
+    # 2) Contar variables de holgura/exceso/artificiales
+    signosLimite = signos[:m]
     cantidadHolguras = np.count_nonzero(signosLimite == 1)
     cantidadArtificiales = np.count_nonzero(signosLimite == 3)
-
     cantidadExceso = cantidadArtificiales * 2
+    totalExtras = cantidadHolguras + cantidadExceso
 
-    cantidadVariablesTotales = cantidadHolguras + cantidadExceso
+    # 3) Construir matriz de coeficientes extendida
+    n_coef = A.shape[1]
+    variables = np.zeros((m, n_coef + totalExtras), dtype=float)
+    separacion = n_coef
+    for i in range(m):
+        # Copiar coeficientes originales
+        variables[i, :n_coef] = A[i]
+        # Añadir variables de holgura/exceso/artificiales
+        if signos[i] == 1:  # <=  -> holgura
+            variables[i, separacion] = 1
+            separacion += 1
+        elif signos[i] == 3:  # = -> exceso(-1) + artificial
+            variables[i, separacion] = -1
+            variables[i, separacion+1] = 1
+            separacion += 2
 
-    cantidadCoeficientes = np.shape(A)[0]-1
-    
-    variables = np.zeros((np.shape(b)[0], cantidadCoeficientes + cantidadVariablesTotales))
+    # 4) Construir fila Z de coeficientes
+    total_cols = variables.shape[1]
+    zFila = np.zeros((1, total_cols), dtype=float)
+    zFila[0, :c.size] = c.flatten()
 
-    separacion = cantidadCoeficientes
+    # 5) Apilar fila Z y variables
+    zYvars = np.vstack((zFila, variables))  # shape (m+1, total_cols)
 
-    for i in range(np.shape(variables)[0]):
-        for j in range(np.shape(b)[0]-1):
-            for k in range(np.shape(A)[1]):
-                variables[i][k] = A[i][k]
-            
+    # 6) Concatenar columna Z a la izquierda
+    Z_and_Y = np.hstack((zColumna, zYvars))  # shape (m+1, 1+total_cols)
 
-            if signos[i] == 1:
-                variables[i][separacion] = 1
-                separacion += 1
+    # 7) Preparar columna LD (lado derecho)
+    ld_vec = np.concatenate((ci.flatten(), b.flatten()))  # shape (m+1,)
+    ldColumna = ld_vec.reshape(-1, 1)
 
-                break
+    # 8) Armar tablero completo
+    tablero = np.hstack((Z_and_Y, ldColumna))  # shape (m+1, 1+total_cols+1)
 
-            if signos[i] == 3:
-                variables[i][separacion] = -1
-                variables[i][separacion+1] = 1
-                separacion += 2
-
-                break 
-
-    # Creación columna LD
-    ldColumna = np.concatenate((ci, b), axis=0)
-
-    # FIX: usar columnas (shape[1]) no filas (shape[0])
-    zFila = np.zeros((1, variables.shape[1]))  
-    zFila[0, :c.shape[0]] = c.flatten()  # Copiar coeficientes de c
-
-     # 1) Creamos la fila Z con los coeficientes de c:
-    zFila = np.zeros((1, variables.shape[1]), dtype=float)
-    zFila[0, :c.size] = c.flatten()  # ahora zFila.shape == (1, n)
-
-    # 2) Apilamos zFila sobre variables para tener (m+1) filas:
-    zYvars = np.vstack((zFila, variables))  
-    # zYvars.shape == (m+1, n)
-
-    # 3) Concatenamos la columna Z a la izquierda:
-    #    zColumna.shape == (m+1, 1)
-    Z_and_Y = np.hstack((zColumna, zYvars))
-    # Z_and_Y.shape == (m+1, 1 + n)
-
-    # 4) Preparamos la columna LD:
-    #    ci.shape == (1,)   b.shape == (m,)
-    ld_array = np.concatenate((ci.flatten(), b.flatten()))
-    columnaZvariables = ld_array.reshape(-1, 1)   
-    # ldColumna.shape == (m+1, 1)
-
-    # Ajustar ldColumna si filas no coinciden
-    if columnaZvariables.shape[0] > ldColumna.shape[0]:
-        extra = columnaZvariables.shape[0] - ldColumna.shape[0]
-        ldColumna = np.vstack([ldColumna,
-                               np.zeros((extra, ldColumna.shape[1]))])
-
-    tablero = np.concatenate((columnaZvariables, ldColumna), axis=1)
-
-    # Generar etiquetas de columnas (holguras, excesos, artificiales…)
-    if cantidadHolguras > 0 and cantidadArtificiales == 0:
+    # 9) Generar etiquetas de columnas
+    #   columnasLetras debería contener nombres de variables originales
+    if cantidadHolguras > 0:
         for i in range(cantidadHolguras):
             columnasLetras.append(f'h{i+1}')
-
     if cantidadArtificiales > 0:
-        # En ambos casos (solo artificiales o ambos tipos)
         for i in range(cantidadArtificiales):
             columnasLetras += [f'e{i+1}', f'a{i+1}']
-        if cantidadHolguras > 0:
-            for i in range(cantidadHolguras):
-                columnasLetras.append(f'h{i+1}')
-
     columnasLetras.append('LD')
 
-    # FIX: pasarle filasLetras y columnasLetras
+    # 10) Imprimir tabla con encabezados
+    #    filasLetras debe tener length = m+1 (Z + each basic var)
+    # importa tu función o defínela en este archivo
     ImprimirTabla(tablero, filasLetras, columnasLetras)
 
     return tablero
@@ -377,20 +355,23 @@ def Simplex(A, b, c, ci, signos, objetivo):
     return AA
 
 def ImprimirTabla(tablero, filasLetras, columnasLetras):
+    """
+    Imprime la matriz 'tablero' con encabezados de filas y columnas.
+    """
     print('Datos que recibe la función ImprimirTabla:')
     print('Filas:', filasLetras)
     print('Columnas:', columnasLetras)
 
-    # Agregar etiqueta de fila al inicio de cada fila de tablero
-    datosFilas = [[fila] + list(valores) for fila, valores in zip(filasLetras, tablero)]
+    # Convierte tablero (np.array) en lista de listas si es necesario
+    datosFilas = [[fila] + list(valores) 
+                  for fila, valores in zip(filasLetras, tablero)]
 
-    # Encabezado de la tabla
-    encabezado = [''] + columnasLetras
+    encabezado = ' ' + columnasLetras
 
     tabla = tabulate(datosFilas, headers=encabezado, tablefmt="grid")
     print(tabla)
 
-#def parser(restriccion_str):
+def parser(restriccion_str):
     x1, x2 = sp.symbols('x1 x2')
     expresion = sp.sympify(restriccion_str)
     # Separo LHS y RHS
@@ -408,14 +389,14 @@ def ImprimirTabla(tablero, filasLetras, columnasLetras):
     
     return [float(coeficiente1), float(coeficiente2)], signo, float(ladoDerecho)
 
-#def parse_obj(obj_str):
+def parse_obj(obj_str):
     x1, x2 = sp.symbols('x1 x2')
     expresion = sp.sympify(obj_str)
     coeficiente1 = expresion.coeff(x1, 1)
     coeficiente2 = expresion.coeff(x2, 1)
     return [float(coeficiente1), float(coeficiente2)]
 
-#def menu():
+def menu():
 
     A = np.empty((0, 2))
     b = np.empty((0, 1))

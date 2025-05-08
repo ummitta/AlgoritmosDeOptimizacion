@@ -2,14 +2,23 @@
 Test 
 
 
+#1
 
-#maximizar
 1*x1 + 0*x2 <= 4
 0*x1 + 2*x2 <= 12
 3*x1 + 2*x2 <= 18
 
 30000*x1 + 50000*x2
 
+max
+
+
+
+
+
+
+
+#2
 
 #minimizar 
 60*x1 + 60*x2 >= 300
@@ -17,7 +26,6 @@ Test
 10*x1 + 30*x2 >= 90
 
 0.12*x1 + 0.15*x2 
-
 
 
 #mixto maximizacion

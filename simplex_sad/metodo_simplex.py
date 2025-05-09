@@ -266,11 +266,13 @@ def elimVarArtificiales(tablero, filasLetras, columnasLetras):
     return tablero
 
 def reconstruirSimplex(tablero, c, obj, filasLetras, columnasLetras):
+
     if obj == "max":
         zValor = 1
         c = -1*c
     elif obj == "min":
         zValor = -1
+ 
 
     zFila = np.zeros((1, len(columnasLetras)), dtype=float)
 

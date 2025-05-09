@@ -24,6 +24,20 @@ max
 0.12*x1 + 0.15*x2 
 min
 
+###minimizacion 4x4
+
+60*x1 + 60*x2 + 50*x3 + 10*x4 >= 200
+12*x1 + 6*x2 + 4*x3 + 18*x4 >= 36 
+1*x1 + 12*x2 + 4*x3 + 8*x4 >= 18 
+6*x1 + 3*x2 + 7*x3 + 2*x4 >= 90 
+
+4*x1 + 5*x2 + 2*x3 + 9*x4 
+min
+
+
+
+
+
 
 ###maximizacion 4x4
 
@@ -34,6 +48,12 @@ min
 5*x1 + 4*x2 + 3*x3 + 2*x4
 max
 
+
+
+
+
+
+
 ###minimizacion mixto 3x4
 
 3*x1 + 1*x2 + 5*x3 <= 60
@@ -43,5 +63,43 @@ max
 min
 
 
-para copiar control + c 
-para pegar en la terminal control + shift + v
+
+
+
+
+
+
+
+
+#maximizacion mixto 
+
+1*x1 + 0*x2 + 1*x3 + 0*x4 >= 40
+0*x1 + 1*x2 + 0*x3 + 1*x4 >= 70
+2*x1 + -1*x2 + 2*x3 + -1*x4 <= 0
+1*x1 + 1*x2 + 0*x3 + 0*x4 <= 180
+0*x1 + 0*x2 + 1*x3 + 1*x4 <= 45
+
+1500*x1 + 1400*x2 + 1600*x3 + 1450*x4
+
+
+#NEMESIS
+
+3*x1 + 1*x2 + 5*x3 <= 60
+1*x1 + 2*x2 + 3*x3 >= 40
+2*x1 + 3*x2 + 1*x3 <= 50
+7*x1 + 2*x2 + 3*x3
+min
+
+minimizar
+
+
+
+#maximizacion mixto 
+
+2*x1 + 0*x2 + 5*x3 <= 90
+3*x1 + 1*x2 + 7*x3 >= 35
+4*x1 + -1*x2 + 3*x3 <= 60
+0*x1 + 1*x2 + -2*x3 >= 80
+0*x1 + 0*x2 + 1*x3 <= 15
+
+15*x1 + 14*x2 + 600*x3

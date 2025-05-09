@@ -67,6 +67,34 @@ def FormaAmpliada(A, b, c, ci, signos, obj, metodo, filasLetras, columnasLetras)
         for i in range(np.shape(c)[1]):
             zFila[0][i+1] = c.flatten()[i]
     
+    if metodo == "mixto":
+        print("metodo mixto activado")
+        wFila = np.zeros_like(zFila)
+        wFila[0, 0] = zValor  # Z en columna 0
+
+        for i in range(len(signos)):
+            if signos[i] == 3:  # Solo restricciones >= participan en W
+                filaRestriccion = np.zeros((1, len(columnasLetras)), dtype=float)
+
+                # Coeficientes de las variables x1, x2, ..., xn
+                filaRestriccion[0, 1:1 + len(A[i])] = A[i]
+                filaRestriccion[0, -1] = b[i]
+
+                # Índices para exceso y artificial
+                indiceE = columnasLetras.index('e' + str(i + 1))
+                indiceA = columnasLetras.index('a' + str(i + 1))
+                filaRestriccion[0, indiceE] = -1  # exceso con -1
+                #filaRestriccion[0, indiceA] = 1   # artificial con +1
+
+                # Sumar esta fila a la función W
+                wFila = wFila + filaRestriccion
+
+        # Crear Z = -W para usar como fila inicial en el tablero (fase 1 parcial)
+        print("Zfila dentro de modo mixto: ", wFila)
+        zFila = -1 * wFila
+        print("Zfila dentro de modo mixto: ", zFila)
+
+
 
     print("filasLetras ", filasLetras)
     print("columnasLetras ", columnasLetras)
@@ -114,7 +142,7 @@ def FormaAmpliada(A, b, c, ci, signos, obj, metodo, filasLetras, columnasLetras)
 
     print("variables: \n", variables)
     print("tablero: \n", tablero)
-
+    print("Imprimir tabla en forma ampliada, justo antes de retornar ")
     ImprimirTabla(tablero, filasLetras, columnasLetras)
     
     return tablero
@@ -129,6 +157,7 @@ def Pivoteo(tablero, filasLetras, columnasLetras):
 
     # Crear una lista de índices válidos (ignorando exceso 'e')
     indices_validos = [i+1 for i, col in enumerate(columnasLetras[1:-1]) if not col.startswith('e') or col.startswith('a') or col.startswith('h')]
+    print("columnasLetras: ", columnasLetras )
     zValores = tablero[0, indices_validos]
     print("indices_validos: ", indices_validos)
     print("zValores: ", zValores)
@@ -150,6 +179,8 @@ def Pivoteo(tablero, filasLetras, columnasLetras):
 
     print(f'indiceMinimo: {indiceMinimoZ}')
     print(f'valorMinimoZ: {valorMinimoZ}')
+    print(f"filaZ: ", filaZ)
+    print(f"filaZ[indiceMinimoZ]: ", filaZ[indiceMinimoZ])
 
     # Calcular las relaciones de los coeficientes de la restricción con la columna pivote
     columnaOperacion = tablero[:, -1]
@@ -166,6 +197,7 @@ def Pivoteo(tablero, filasLetras, columnasLetras):
             if abs(denominador) <= epsilon:
                 operatoria[i][0] = 0.0  # Asignar infinito para evitar división por cero
 
+    print("tabla entes de pivotear")
     # Imprimir tabla antes de pivotear
     ImprimirTabla(tablero, filasLetras, columnasLetras)
 
@@ -180,12 +212,14 @@ def Pivoteo(tablero, filasLetras, columnasLetras):
     # Realizar el pivote
     pivote = tablero[indiceMinimo][indiceMinimoZ]
 
+    print(f"")
     print(f'pivotexxxx: {pivote}')
     print(f'indicessss: {indiceMinimo, indiceMinimoZ}')
 
     filasLetras[indiceMinimo] = columnasLetras[indiceMinimoZ]
 
     for i in range(1, columnas):
+        print(f"operaicion: {tablero[indiceMinimo][i]} / {pivote} = {tablero[indiceMinimo][i] / pivote}")
         tablero[indiceMinimo][i] = tablero[indiceMinimo][i] / pivote
 
 
@@ -299,15 +333,29 @@ def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
             aux = True
             continue
 
+        if not aux and procedimiento == "mixto":
+            print("cambiando a simplex mixto")
+
+          
+            AA = elimVarArtificiales(AA, filasLetras, columnasLetras)
+
+            procedimiento = "simplex"
+            AA = reconstruirSimplex(AA, c, obj, filasLetras, columnasLetras)
+            aux = True 
+            continue
+
+            
+
         if aux:
             AA = Pivoteo(AA, filasLetras, columnasLetras)
     return AA
 
 def ImprimirTabla(tablero, filasLetras, columnasLetras):
     # Crear tabla con encabezados y filas
+    print("Dentro de imprimir tabla")
     print("filasLetras: ", filasLetras)
     print("columnasLetras: ", columnasLetras)
-    print("tablero: ", tablero)
+    #print("tablero: ", tablero)
     datos = [[fila] + list(fila_valores) for fila, fila_valores in zip(filasLetras, tablero)] 
 
     # Preparar encabezados: espacio vacío para esquina superior izquierda + columnas

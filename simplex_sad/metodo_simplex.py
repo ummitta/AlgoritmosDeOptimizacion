@@ -7,14 +7,13 @@ import sympy as sp
 epsilon = sys.float_info.epsilon
 np.set_printoptions(suppress=True, precision=2)
 
-def FormaAmpliada(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
+def FormaAmpliada(A, b, c, ci, signos, obj, metodo, filasLetras, columnasLetras):
     zValor = 0
     if obj == "max":
         zValor = 1
-        c = -1*c
-        print("cc: ", c)
     elif obj == "min":
         zValor = -1
+        c = -1*c
 
     # crear variables basicas
     filasLetras.append("Z")
@@ -31,8 +30,8 @@ def FormaAmpliada(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
             filasLetras.append('h' + str(i+1))
             holguras += 1
         if signos[i] == 3:
-            columnasLetras.append('a' + str(i+1))
             columnasLetras.append('e' + str(i+1))
+            columnasLetras.append('a' + str(i+1))
             filasLetras.append('e' + str(i+1))
             excesos += 2
 
@@ -40,11 +39,33 @@ def FormaAmpliada(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
     columnasLetras.append('LD')
 
     #Creacion de columna z (del largo de columnaletras)        
-    zFila = np.zeros((1, len(columnasLetras)-1), dtype=float)
-    zFila = np.insert(zFila, 0, zValor, axis=1)
-    
-    for i in range(np.shape(c)[1]):
-        zFila[0][i+1] = c.flatten()[i]
+    zFila = np.zeros((1, len(columnasLetras)), dtype=float)
+
+    if metodo == "2fases":
+        print("metodo 2 fases")
+        wFila = np.zeros_like(zFila)
+        wFila[0, 0] = zValor  # W en la posición [0][0]
+
+        for i in range(len(signos)):
+            if signos[i] == 3:
+                filaRestriccion = np.zeros((1, len(columnasLetras)), dtype=float)
+                filaRestriccion[0, 1:1+len(A[i])] = A[i]
+                filaRestriccion[0, -1] = b[i]
+                
+                # Agregar exceso (-1) y artificial (+1)
+                indiceE = columnasLetras.index('e' + str(i+1))
+                indiceA = columnasLetras.index('a' + str(i+1))
+                filaRestriccion[0, indiceE] = -1
+                filaRestriccion[0, indiceA] = 1
+
+                wFila = wFila + filaRestriccion
+
+        zFila = -1 * wFila
+
+    if metodo == "simplex":
+        zFila[0, 0] = zValor  # Z en la posición [0][0]
+        for i in range(np.shape(c)[1]):
+            zFila[0][i+1] = c.flatten()[i]
     
 
     print("filasLetras ", filasLetras)
@@ -77,23 +98,21 @@ def FormaAmpliada(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
 
     for i in range(np.shape(variables)[0]):
         for j in range(np.shape(b)[0]-1):
-
             if signos[i] == 1:
                 variables[i][separacion] = 1
                 tablero[i+1][separacion+1] = 1
-    
                 separacion += 1
                 break
 
             if signos[i] == 3:
                 variables[i][separacion] = -1
+                variables[i][separacion+1] = 1
                 tablero[i+1][separacion+1] = -1
+                tablero[i+1][separacion+2] = 1
                 separacion += 2
-                break 
+                break
 
     print("variables: \n", variables)
-
-
     print("tablero: \n", tablero)
 
     ImprimirTabla(tablero, filasLetras, columnasLetras)
@@ -106,7 +125,20 @@ def Pivoteo(tablero, filasLetras, columnasLetras):
 
     filas = tablero.shape[0]
     columnas = tablero.shape[1]
-    filaZ = tablero[0, 1:-1]  # Excluye la primera y última columna
+    filaZ = tablero[0, 1:-1]  # Excluye la columna Z y LD
+
+    # Crear una lista de índices válidos (ignorando exceso 'e')
+    indices_validos = [i+1 for i, col in enumerate(columnasLetras[1:-1]) if not col.startswith('e') or col.startswith('a') or col.startswith('h')]
+    zValores = tablero[0, indices_validos]
+    print("indices_validos: ", indices_validos)
+    print("zValores: ", zValores)
+    if np.all(zValores >= 0):
+        print("Solución óptima alcanzada")
+        return tablero
+
+    indiceMinimoZ_local = np.argmin(zValores)
+    indiceMinimoZ = indices_validos[indiceMinimoZ_local]
+    valorMinimoZ = tablero[0][indiceMinimoZ]
 
     # Crear un vector para almacenar las operaciones
     operatoria = np.zeros((filas, 1), dtype=float)
@@ -114,6 +146,7 @@ def Pivoteo(tablero, filasLetras, columnasLetras):
     # Buscar el índice y valor mínimo de la fila Z
     indiceMinimoZ = np.argmin(filaZ) + 1
     valorMinimoZ = np.min(filaZ)
+
 
     print(f'indiceMinimo: {indiceMinimoZ}')
     print(f'valorMinimoZ: {valorMinimoZ}')
@@ -182,16 +215,58 @@ def Pivoteo(tablero, filasLetras, columnasLetras):
 
     return tablero
 
+def elimVarArtificiales(tablero, filasLetras, columnasLetras):
+    print("Eliminar variables artificiales")
+
+    # Identificar los índices de columnas artificiales
+    indices_a_eliminar = [i for i, nombre in enumerate(columnasLetras) if nombre.startswith('a')]
+
+    # Eliminar columnas del tablero y nombres correspondientes
+    for idx in sorted(indices_a_eliminar, reverse=True):
+        tablero = np.delete(tablero, idx, axis=1)
+        columnasLetras.pop(idx)
+
+    print("VARIABLES ARTIFICIALES ELIMINADAS")
+    ImprimirTabla(tablero, filasLetras, columnasLetras)
+
+    return tablero
+
+def reconstruirSimplex(tablero, c, obj, filasLetras, columnasLetras):
+    if obj == "max":
+        zValor = 1
+        c = -1*c
+    elif obj == "min":
+        zValor = -1
+
+    zFila = np.zeros((1, len(columnasLetras)), dtype=float)
+
+    for i in range(np.shape(c)[1]):
+            zFila[0][i+1] = c.flatten()[i]
+
+    #agregar zfila al tablero
+    tablero[0, :] = zFila
+    tablero[0, 0] = zValor
+    #tablero[0, -1] = 0
+
+
+    return tablero
+
+def hay_negativos_validos(filaZ, columnasLetras, fase):
+    for i, valor in enumerate(filaZ):
+        col_name = columnasLetras[i + 1]  # +1 por el desplazamiento por Z
+        if valor < 0:
+            if fase == "2fases" and col_name.startswith('a'):
+                return True
+            if fase in ("simplex", "mixto") and (col_name.startswith('x') or col_name.startswith('h')):
+                return True
+    return False
+
 def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
     print("Simplex")
-
+    
     procedimiento = ''
     aux = False
-    AA = FormaAmpliada(A, b, c, ci, signos, obj, filasLetras, columnasLetras)
-    
-    #Fase 1: solo si hay  artificiales y de exceso
-    
-    
+
     menorIgual = 0
     mayorIgual = 0
     for i in range(len(signos)):
@@ -203,22 +278,29 @@ def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
     if menorIgual > 0 and mayorIgual == 0:
         procedimiento = 'simplex'
     if menorIgual == 0 and mayorIgual > 0:
-        procedimiento = 'metodo de dos fases normal'
+        procedimiento = '2fases'
     if menorIgual > 0 and mayorIgual > 0:
-        procedimiento = "metodo de fases mixto"
+        procedimiento = "mixto"
+
+    AA = FormaAmpliada(A, b, c, ci, signos, obj, procedimiento, filasLetras, columnasLetras)
+
+
+    aux = True
     
-
-    if procedimiento == "simplex":
-        aux = True
-
     while aux:
-
-        AA = Pivoteo(AA, filasLetras, columnasLetras)
-        
         zFuncion = AA[0, 1:-1]
-        print("zFuncion: ", zFuncion)
-        aux = np.any(zFuncion < 0) 
+        aux = hay_negativos_validos(zFuncion, columnasLetras, procedimiento)
 
+        if not aux and procedimiento == "2fases":
+            print("cambiando a simplex")
+            AA = elimVarArtificiales(AA, filasLetras, columnasLetras)
+            procedimiento = "simplex"
+            AA = reconstruirSimplex(AA, c, obj, filasLetras, columnasLetras)
+            aux = True
+            continue
+
+        if aux:
+            AA = Pivoteo(AA, filasLetras, columnasLetras)
     return AA
 
 def ImprimirTabla(tablero, filasLetras, columnasLetras):
@@ -265,8 +347,9 @@ def parse_obj(obj_str, v):
     return coeficientes
 
 def menu():
+    columnasLetras = []
+    filasLetras = []
 
-    
     v = int(input("Cantidad de variables: "))
     if v <= 0:
         print("Las variables deben ser > 0")
@@ -281,7 +364,7 @@ def menu():
     signos = np.empty((0,1))
     ci = np.empty((0,1))
 
-    print("Ingresa cada restricción, por ej: 2*x1 + 3*x2 <= 300")
+    print("Ingresa cada restricción, formato:\n2*x1 + 3*x2 <= 300\n")
     for i in range(n):
         línea = input(f"> ")
         coefs, signo, rhs = parser(línea, v)
@@ -297,26 +380,22 @@ def menu():
         print("signos: ", signos)
 
     # 2) Leer función obj
-    print("\nAhora ingresa la función obj, ej: 30000*x1 + 4000*x2")
+    print("Ahora ingresa la función obj, formato:\n30000*x1 + 4000*x2\n")
     obj_str = input("> ")
     c = np.array(parse_obj(obj_str, v)).reshape(1, -1)
-
-    print("\nAhora el tipo de modo 'maximizar' o 'minimizar' ")
+    c = -1 * c
+    print("Ahora el tipo de modo 'max' o 'min'\n")
 
     modo = input(">")
 
-    print("\nMatriz A (coeficientes de restricciones):")
+    print("Matriz A (coeficientes de restricciones):\n")
     print(A)
-    print("\nVector b (lado derecho de restricciones):")
+    print("Vector b (lado derecho de restricciones):\n")
     print(b)
-    print("\nSignos de las restricciones:")
+    print("Signos de las restricciones:")
     print(signos)
-    print("\nVector c (coeficientes de la función obj):")
+    print("Vector c (coeficientes de la función obj):\n")
     print(c)
     return Simplex(A, b, c, ci, signos, modo, filasLetras, columnasLetras)
 
-columnasLetras = []
-filasLetras = []
-
 menu()
-

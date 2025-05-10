@@ -148,51 +148,101 @@ def FormaAmpliada(A, b, c, ci, signos, obj, metodo, filasLetras, columnasLetras)
     return tablero
 
 def Pivoteo(tablero, filasLetras, columnasLetras):
+    print("Encontrar_col_pivote")
+    valorExcluir = 666
 
-    filas, columnas = tablero.shape
-    print("Iniciando pivote para todos los casos")
+    filas = tablero.shape[0]
+    columnas = tablero.shape[1]
+    filaZ = tablero[0, 1:-1]  # Excluye la columna Z y LD
+
+    # Crear una lista de índices válidos (ignorando exceso 'e')
+    indices_validos = [i+1 for i, col in enumerate(columnasLetras[1:-1]) if not col.startswith('e') or col.startswith('a') or col.startswith('h')]
+    print("columnasLetras: ", columnasLetras )
+    zValores = tablero[0, indices_validos]
+    print("indices_validos: ", indices_validos)
+    print("zValores: ", zValores)
+
+    indiceMinimoZ_local = np.argmin(zValores)
+    indiceMinimoZ = indices_validos[indiceMinimoZ_local]
+    valorMinimoZ = tablero[0][indiceMinimoZ]
+
+    # Crear un vector para almacenar las operaciones
+    operatoria = np.zeros((filas, 1), dtype=float)
+
+    # Buscar el índice y valor mínimo de la fila Z
+    indiceMinimoZ = np.argmin(filaZ) + 1
+    valorMinimoZ = np.min(filaZ)
+
+
+    print(f'indiceMinimo: {indiceMinimoZ}')
+    print(f'valorMinimoZ: {valorMinimoZ}')
+    print(f"filaZ: ", filaZ)
+
+    # Calcular las relaciones de los coeficientes de la restricción con la columna pivote
+    columnaOperacion = tablero[:, -1]
+    for i in range(1, filas):
+        numerador = tablero[i][columnas-1]
+        denominador = tablero[i][indiceMinimoZ]
+        
+        if denominador != 0.0:
+            operacion = numerador / denominador
+            if operacion > 0:
+                operatoria[i][0] = operacion
+
+            # Evitar divisiones por cero o valores numéricos muy pequeños
+            if abs(denominador) <= epsilon:
+                operatoria[i][0] = 0.0  # Asignar infinito para evitar división por cero
+
+    print("tabla entes de pivotear")
+    # Imprimir tabla antes de pivotear
+    ImprimirTabla(tablero, filasLetras, columnasLetras)
+
     
-    while True:
+    print(f'indiceMinimoZ: {indiceMinimoZ}')
+    #filtrar los valores que sean 0
+    for i in range(1, filas):
+        if operatoria[i][0] == 0.0:
+            operatoria[i][0] = np.inf  
 
-        filaZ = tablero[0, 1:-1]
+    indiceMinimo = np.argmin(operatoria[1:, 0]) + 1  # +1 para ajustar el índice
+    # Realizar el pivote
+    pivote = tablero[indiceMinimo][indiceMinimoZ]
+
+    print(f"")
+    print(f'pivotexxxx: {pivote}')
+    print(f'indicessss: {indiceMinimo, indiceMinimoZ}')
+
+    filasLetras[indiceMinimo] = columnasLetras[indiceMinimoZ]
+
+    for i in range(1, columnas):
+        print(f"operaicion: {tablero[indiceMinimo][i]} / {pivote} = {tablero[indiceMinimo][i] / pivote}")
+        tablero[indiceMinimo][i] = tablero[indiceMinimo][i] / pivote
 
 
-        #extrae los negativos 
-        negativos = [
-            j+1 for j, val in enumerate(filaZ)
-            if val < -epsilon and columnasLetras[j+1].startswith(('x', 'h', 'e'))
-        ]
-        if not negativos:
-            print("No quedan coeficientes negativos en Z. Fin de pivoteo.")
-            break
-        
-        j_ent = min(negativos, key=lambda j: tablero[0, j])
-        print(f"Variable entrante: {columnasLetras[j_ent]} (columna {j_ent})")
-        
-        ratios = np.full(filas, np.inf)
-        for i in range(1, filas):
-            aij = tablero[i, j_ent]
-            if aij > epsilon:
-                ratios[i] = tablero[i, -1] / aij
-        i_sal = np.argmin(ratios)
-        print(f"Variable saliente: {filasLetras[i_sal]} (fila {i_sal})")
-        
-        filasLetras[i_sal] = columnasLetras[j_ent]
-        
-   
-        piv = tablero[i_sal, j_ent]
-        tablero[i_sal, 1:] /= piv
+    ImprimirTabla(tablero, filasLetras, columnasLetras)
 
-        for i in range(filas):
-            if i == i_sal:
-                continue
-            factor = tablero[i, j_ent]
-            tablero[i, 1:] -= factor * tablero[i_sal, 1:]
-            tablero[i, np.abs(tablero[i]) <= epsilon] = 0.0
-        
-        print(f"Pivote aplicado en fila {i_sal}, columna {j_ent}")
-        ImprimirTabla(tablero, filasLetras, columnasLetras)
-    
+    print('Pivotear')
+
+    # hacer ceros arriba y abajo del pivote
+    for i in range(filas):
+        pivoteColumna = tablero[i][indiceMinimoZ]
+        for j in range(columnas):
+            if i == indiceMinimo:
+                break
+
+            numero = tablero[i][j]
+            pivote = tablero[indiceMinimo][j]
+            operacion = numero + (pivoteColumna * -1 * pivote)
+
+            # Evitar casi cero
+            if abs(operacion) <= epsilon:
+                tablero[i][j] = 0
+            else:
+                tablero[i][j] = operacion
+
+    # Imprimir la tabla final
+    ImprimirTabla(tablero, filasLetras, columnasLetras)
+
     return tablero
 
 def elimVarArtificiales(tablero, filasLetras, columnasLetras):
@@ -244,38 +294,6 @@ def hay_negativos_validos(filaZ, columnasLetras, fase, tablero):
                 return True
     return False
 
-def Pivoteo2(tablero, filasLetras, columnasLetras):
-    print("Iniciando Pivoteo2...")
-
-    for i in range(1, len(filasLetras)):  # Saltar Z
-        var_basica = filasLetras[i]
-
-        if var_basica not in columnasLetras:
-            print(f"Variable {var_basica} no está en columnas, se ignora.")
-            continue
-
-        fila_idx = i
-        col_idx = columnasLetras.index(var_basica)
-
-        pivote = tablero[fila_idx][col_idx]
-        if abs(pivote) < 1e-8:
-            print(f"La posición de pivote ({var_basica}, {var_basica}) es cero, no se puede normalizar.")
-            continue
-
-        tablero[fila_idx] = tablero[fila_idx] / pivote
-
-        for j in range(len(tablero)):
-            if j != fila_idx:
-                factor = tablero[j][col_idx]
-                tablero[j] = tablero[j] - factor * tablero[fila_idx]
-
-        print(f"Pivoteo aplicado para variable básica '{var_basica}' en columna '{columnasLetras[col_idx]}'.")
-
-    return tablero
-
-def Pivoteo3(tablero, filasLetras, columnasLetras):
-    print("Iniciando Pivoteo3...")
-
 def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
     print("Simplex")
     
@@ -315,58 +333,15 @@ def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
             aux = True
             continue
 
-        if not aux and procedimiento == "mixto" and obj == "min":
-            print("cambiando a simplex mixto (min)")
-
-            print("AA :", AA)
-            AA = elimVarArtificiales(AA, filasLetras, columnasLetras)
-            procedimiento = "simplex"
-            
-            print("AA :", AA)
-            # Pasar c como está, sin modificarlo más
-            #c = -1*c #si sale positivo no se borra, pero sino se borra
-            AA = reconstruirSimplex(AA, c, "min", filasLetras, columnasLetras)
-            print("AA: ", AA)
-            AA = Pivoteo2(AA,filasLetras,columnasLetras)
-
-            print(AA)
-            aux = False
-            continue
-
-        if not aux and procedimiento == "mixto" and obj == "max":
-            print("cambiando a simplex mixto (max)")
+        if not aux and procedimiento == "mixto": #max o min mixto
+            print("cambiando a simplex mixto")
 
             AA = elimVarArtificiales(AA, filasLetras, columnasLetras)
-            procedimiento = "simplex"
 
-            #print("AA :", AA)
-            # Pasar c como está, sin modificarlo más
-            #c = -1*c #si sale positivo no se borra, pero sino se borra
-            AA = reconstruirSimplex(AA, c, "min", filasLetras, columnasLetras)
-            print("antes de pivoteo2: ", AA)
-            AA = Pivoteo2(AA,filasLetras,columnasLetras)
-
-            print(AA)
-            aux = True
+            procedimiento = "simplex" 
+            AA = reconstruirSimplex(AA, c, obj, filasLetras, columnasLetras)
+            aux = True 
             continue
-            # c = -1*c
-            # AA = reconstruirSimplex(AA, c, "max", filasLetras, columnasLetras)
-            # aux = True
-            # continue
-
-            #--------------------------------
-
-        # if not aux and procedimiento == "mixto" and obj == "min":
-             
-        #     print("Entreo a aux normal, para mixto min")
-        #     print(AA)
-        #     AA = elimVarArtificiales(AA, filasLetras, columnasLetras)
-        #     print(AA)
-        #     #  procedimiento = "simplex"
-        #     #  AA = reconstruirSimplex(AA, c, "min", filasLetras, columnasLetras)
-        #     aux = False
-        #     continue
-
         
         if aux:
             AA = Pivoteo(AA, filasLetras, columnasLetras)

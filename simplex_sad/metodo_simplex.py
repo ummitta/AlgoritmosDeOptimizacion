@@ -161,9 +161,6 @@ def Pivoteo(tablero, filasLetras, columnasLetras):
     zValores = tablero[0, indices_validos]
     print("indices_validos: ", indices_validos)
     print("zValores: ", zValores)
-    if np.all(zValores >= 0):
-        print("Solución óptima alcanzada")
-        return tablero
 
     indiceMinimoZ_local = np.argmin(zValores)
     indiceMinimoZ = indices_validos[indiceMinimoZ_local]
@@ -180,7 +177,6 @@ def Pivoteo(tablero, filasLetras, columnasLetras):
     print(f'indiceMinimo: {indiceMinimoZ}')
     print(f'valorMinimoZ: {valorMinimoZ}')
     print(f"filaZ: ", filaZ)
-    print(f"filaZ[indiceMinimoZ]: ", filaZ[indiceMinimoZ])
 
     # Calcular las relaciones de los coeficientes de la restricción con la columna pivote
     columnaOperacion = tablero[:, -1]
@@ -267,12 +263,12 @@ def elimVarArtificiales(tablero, filasLetras, columnasLetras):
 
 def reconstruirSimplex(tablero, c, obj, filasLetras, columnasLetras):
 
+    zValor = 0
     if obj == "max":
         zValor = 1
-        c = -1*c
     elif obj == "min":
         zValor = -1
- 
+        c = -1*c
 
     zFila = np.zeros((1, len(columnasLetras)), dtype=float)
 
@@ -280,14 +276,15 @@ def reconstruirSimplex(tablero, c, obj, filasLetras, columnasLetras):
             zFila[0][i+1] = c.flatten()[i]
 
     #agregar zfila al tablero
-    tablero[0, :] = zFila
+    
     tablero[0, 0] = zValor
+    tablero[0, :] = zFila
     #tablero[0, -1] = 0
-
+    print("tablero antes de agregar la fila Z: ", tablero)
 
     return tablero
 
-def hay_negativos_validos(filaZ, columnasLetras, fase):
+def hay_negativos_validos(filaZ, columnasLetras, fase, tablero):
     for i, valor in enumerate(filaZ):
         col_name = columnasLetras[i + 1]  # +1 por el desplazamiento por Z
         if valor < 0:
@@ -323,11 +320,12 @@ def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
 
     aux = True
     
-    while aux:
+    while aux: 
+        #maximizacion menor igual
         zFuncion = AA[0, 1:-1]
-        aux = hay_negativos_validos(zFuncion, columnasLetras, procedimiento)
+        aux = hay_negativos_validos(zFuncion, columnasLetras, procedimiento, AA)
 
-        if not aux and procedimiento == "2fases":
+        if not aux and procedimiento == "2fases": #minimizacion mayor igual
             print("cambiando a simplex")
             AA = elimVarArtificiales(AA, filasLetras, columnasLetras)
             procedimiento = "simplex"
@@ -335,19 +333,16 @@ def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
             aux = True
             continue
 
-        if not aux and procedimiento == "mixto":
+        if not aux and procedimiento == "mixto": #max o min mixto
             print("cambiando a simplex mixto")
 
-          
             AA = elimVarArtificiales(AA, filasLetras, columnasLetras)
 
-            procedimiento = "simplex"
+            procedimiento = "simplex" 
             AA = reconstruirSimplex(AA, c, obj, filasLetras, columnasLetras)
             aux = True 
             continue
-
-            
-
+        
         if aux:
             AA = Pivoteo(AA, filasLetras, columnasLetras)
     return AA
@@ -433,7 +428,6 @@ def menu():
     print("Ahora ingresa la función obj, formato:\n30000*x1 + 4000*x2\n")
     obj_str = input("> ")
     c = np.array(parse_obj(obj_str, v)).reshape(1, -1)
-    c = -1 * c
     print("Ahora el tipo de modo 'max' o 'min'\n")
 
     modo = input(">")

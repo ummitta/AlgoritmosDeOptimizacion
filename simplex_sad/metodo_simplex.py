@@ -211,9 +211,10 @@ def elimVarArtificiales(tablero, filasLetras, columnasLetras):
 
     return tablero
 
-def reconstruirSimplex(tablero, c, obj, filasLetras, columnasLetras):
+def reconstruirSimplex(tablero, c, obj, filasLetras, columnasLetras, procedimiento):
 
     zValor = 0
+
     if obj == "max":
         zValor = 1
     elif obj == "min":
@@ -226,9 +227,12 @@ def reconstruirSimplex(tablero, c, obj, filasLetras, columnasLetras):
             zFila[0][i+1] = c.flatten()[i]
 
     #agregar zfila al tablero
-    
+    print("zfila: ", zFila)
     tablero[0, 0] = zValor
-    tablero[0, :] = zFila
+    if procedimiento == "2fases":
+        tablero[0, :] = -1* zFila
+    else:
+        tablero[0, :] = zFila
     #tablero[0, -1] = 0
     print("tablero antes de agregar la fila Z: ", tablero)
 
@@ -292,6 +296,7 @@ def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
 
     if menorIgual > 0 and mayorIgual == 0:
         procedimiento = 'simplex'
+        c = -1*c
     if menorIgual == 0 and mayorIgual > 0:
         procedimiento = '2fases'
     if menorIgual > 0 and mayorIgual > 0:
@@ -310,9 +315,15 @@ def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
         if not aux and procedimiento == "2fases": #minimizacion mayor igual
             print("cambiando a simplex")
             AA = elimVarArtificiales(AA, filasLetras, columnasLetras)
+
+            
+            AA = reconstruirSimplex(AA, c, obj, filasLetras, columnasLetras,procedimiento)
+            print("AA 2 fases: \n {}", AA)
+
             procedimiento = "simplex"
-            AA = reconstruirSimplex(AA, c, obj, filasLetras, columnasLetras)
-            aux = True
+
+            AA = Pivoteo2(AA,filasLetras,columnasLetras)
+            aux = False
             continue
 
         if not aux and procedimiento == "mixto" and obj == "min":
@@ -325,7 +336,7 @@ def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
             print("AA :", AA)
             # Pasar c como está, sin modificarlo más
             #c = -1*c #si sale positivo no se borra, pero sino se borra
-            AA = reconstruirSimplex(AA, c, "min", filasLetras, columnasLetras)
+            AA = reconstruirSimplex(AA, c, "min", filasLetras, columnasLetras,procedimiento)
             print("AA: ", AA)
             AA = Pivoteo2(AA,filasLetras,columnasLetras)
 
@@ -342,7 +353,7 @@ def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
             #print("AA :", AA)
             # Pasar c como está, sin modificarlo más
             #c = -1*c #si sale positivo no se borra, pero sino se borra
-            AA = reconstruirSimplex(AA, c, "min", filasLetras, columnasLetras)
+            AA = reconstruirSimplex(AA, c, "min", filasLetras, columnasLetras,procedimiento)
             print("antes de pivoteo2: ", AA)
             AA = Pivoteo2(AA,filasLetras,columnasLetras)
 
@@ -467,4 +478,6 @@ def menu():
     print(c)
     return Simplex(A, b, c, ci, signos, modo, filasLetras, columnasLetras)
 
-menu()
+tablero = menu()
+
+print(tablero)

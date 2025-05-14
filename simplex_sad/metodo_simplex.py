@@ -108,7 +108,7 @@ def FormaAmpliada(A, b, c, ci, signos, obj, metodo, filasLetras, columnasLetras)
 
     tablero[0, :] = zFila
     print("np.shape(b)[0]: ", np.shape(b)[0])
-    print("A[3][1] ", A[2][1])
+    #print("A[3][1] ", A[2][1])
 
     for i in range(np.shape(b)[0]):
         for j in range(np.shape(A)[1]):
@@ -166,13 +166,16 @@ def Pivoteo(tablero, filasLetras, columnasLetras):
             print("No quedan coeficientes negativos en Z. Fin de pivoteo.")
             break
         
+        print("negativo")
+
         j_ent = min(negativos, key=lambda j: tablero[0, j])
         print(f"Variable entrante: {columnasLetras[j_ent]} (columna {j_ent})")
         
         ratios = np.full(filas, np.inf)
         for i in range(1, filas):
             aij = tablero[i, j_ent]
-            if aij > epsilon:
+            if abs(aij) > epsilon and aij > 0:
+
                 ratios[i] = tablero[i, -1] / aij
         i_sal = np.argmin(ratios)
         print(f"Variable saliente: {filasLetras[i_sal]} (fila {i_sal})")
@@ -189,11 +192,70 @@ def Pivoteo(tablero, filasLetras, columnasLetras):
             factor = tablero[i, j_ent]
             tablero[i, 1:] -= factor * tablero[i_sal, 1:]
             tablero[i, np.abs(tablero[i]) <= epsilon] = 0.0
+
         
+        tablero[np.abs(tablero) <= epsilon] = 0.0
         print(f"Pivote aplicado en fila {i_sal}, columna {j_ent}")
         ImprimirTabla(tablero, filasLetras, columnasLetras)
     
     return tablero
+
+def Pivoteo3(tablero, filasLetras, columnasLetras):
+    """
+    Realiza pivote repetido hasta que no queden coeficientes negativos en la fila Z
+    (excluyendo la primera y la última columna). En cada pivote, normaliza la fila
+    pivote y elimina las demás entradas en la columna pivote para dejarlas en cero.
+    """
+    filas, columnas = tablero.shape
+    print("Iniciando pivoteo 3")
+
+    while True:
+        # Extraer coeficientes de la fila objetivo (Z), omitiendo columna 0 y la última
+        z = tablero[0, 1:columnas-1]
+        print("Fila Z (excluyendo Z y LD):", z)
+
+        # Si no hay negativos, la solución es óptima
+        if np.all(z >= 0):
+            print("Solución óptima alcanzada")
+            break
+
+        # Columna entrante: índice del coeficiente más negativo en Z
+        j_ent = np.argmin(z) + 1
+        print(f"Columna entrante: {columnasLetras[j_ent]} (índice {j_ent})")
+
+        # Cálculo de ratios para elegir fila saliente
+        ratios = np.full(filas, np.inf)
+        for i in range(1, filas):
+            denom = tablero[i, j_ent]
+            if denom > epsilon:
+                ratios[i] = tablero[i, -1] / denom
+        print("Ratios:", ratios)
+
+        # Fila saliente: la de menor ratio positivo
+        i_sal = np.argmin(ratios[1:]) + 1
+        print(f"Fila saliente: {filasLetras[i_sal]} (índice {i_sal})")
+
+        # Actualizar variable básica
+        filasLetras[i_sal] = columnasLetras[j_ent]
+
+        # Normalizar la fila pivote
+        pivote = tablero[i_sal, j_ent]
+        tablero[i_sal, :] /= pivote
+
+        # Eliminar entradas en la columna pivote en otras filas
+        for i in range(filas):
+            if i != i_sal:
+                factor = tablero[i, j_ent]
+                tablero[i, :] -= factor * tablero[i_sal, :]
+
+        # Mostrar tabla intermedia
+        ImprimirTabla(tablero, filasLetras, columnasLetras)
+
+
+    
+    tablero[0, 1:] *= -1
+    return tablero
+
 
 def elimVarArtificiales(tablero, filasLetras, columnasLetras):
     print("Eliminar variables artificiales")
@@ -238,6 +300,27 @@ def reconstruirSimplex(tablero, c, obj, filasLetras, columnasLetras, procedimien
 
     return tablero
 
+def reconstruirSimplex2(tablero, c, obj, filasLetras, columnasLetras):
+    if obj == "max":
+        zValor = 1
+        
+    elif obj == "min":
+        zValor = -1
+        c = -1*c
+
+    zFila = np.zeros((1, len(columnasLetras)), dtype=float)
+
+    for i in range(np.shape(c)[1]):
+            zFila[0][i+1] = c.flatten()[i]
+
+    #agregar zfila al tablero
+    tablero[0, :] = -1*zFila
+    tablero[0, 0] = zValor
+    #tablero[0, -1] = 0
+
+
+    return tablero
+
 def hay_negativos_validos(filaZ, columnasLetras, fase, tablero):
     for i, valor in enumerate(filaZ):
         col_name = columnasLetras[i + 1]  # +1 por el desplazamiento por Z
@@ -274,11 +357,10 @@ def Pivoteo2(tablero, filasLetras, columnasLetras):
                 tablero[j] = tablero[j] - factor * tablero[fila_idx]
 
         print(f"Pivoteo aplicado para variable básica '{var_basica}' en columna '{columnasLetras[col_idx]}'.")
-        ImprimirTabla(tablero, filasLetras, columnasLetras)
+
     return tablero
 
-def Pivoteo3(tablero, filasLetras, columnasLetras):
-    print("Iniciando Pivoteo3...")
+
 
 def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
     print("Simplex")
@@ -304,25 +386,34 @@ def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
 
     AA = FormaAmpliada(A, b, c, ci, signos, obj, procedimiento, filasLetras, columnasLetras)
 
+    print("Despues de forma ampliada")
+    print(AA)
+
     aux = True
-    
+
     while aux: 
         #maximizacion menor igual
         zFuncion = AA[0, 1:-1]
         aux = hay_negativos_validos(zFuncion, columnasLetras, procedimiento, AA)
 
         if not aux and procedimiento == "2fases": #minimizacion mayor igual
-            print("cambiando a simplex")
+            print("cambiando a simplex de 2 fases")
             AA = elimVarArtificiales(AA, filasLetras, columnasLetras)
-
-            
-            AA = reconstruirSimplex(AA, c, obj, filasLetras, columnasLetras,procedimiento)
-            print("AA 2 fases: \n {}", AA)
-
             procedimiento = "simplex"
+            AA = reconstruirSimplex2(AA, c, obj, filasLetras, columnasLetras)
+            print("despues de reconstruir en fase 2")
+            ImprimirTabla(AA,filasLetras,columnasLetras)
+            print("procedimiento: ", procedimiento)
 
             AA = Pivoteo2(AA,filasLetras,columnasLetras)
+            print("Despues de pivoteo 2")
+            ImprimirTabla(AA,filasLetras,columnasLetras)
             aux = False
+            AA = Pivoteo3(AA,filasLetras,columnasLetras)
+            print("Despues de pivoteo 3")
+            ImprimirTabla(AA,filasLetras,columnasLetras)
+
+            
             continue
 
         if not aux and procedimiento == "mixto" and obj == "min":
@@ -356,15 +447,11 @@ def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
             print("antes de pivoteo2: ", AA)
             AA = Pivoteo2(AA,filasLetras,columnasLetras)
 
+            print(AA)
             aux = True
             continue
-            # c = -1*c
-            # AA = reconstruirSimplex(AA, c, "max", filasLetras, columnasLetras)
-            # aux = True
-            # continue
 
-            #--------------------------------
-
+        print("antes del if de aux :" , aux)
         if aux:
             AA = Pivoteo(AA, filasLetras, columnasLetras)
     return AA
@@ -466,4 +553,5 @@ def menu():
 
 tablero = menu()
 
-print(tablero)
+
+

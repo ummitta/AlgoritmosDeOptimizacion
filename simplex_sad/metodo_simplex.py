@@ -270,7 +270,7 @@ def Pivoteo2(tablero, filasLetras, columnasLetras):
                 tablero[j] = tablero[j] - factor * tablero[fila_idx]
 
         print(f"Pivoteo aplicado para variable básica '{var_basica}' en columna '{columnasLetras[col_idx]}'.")
-
+        ImprimirTabla(tablero, filasLetras, columnasLetras)
     return tablero
 
 def Pivoteo3(tablero, filasLetras, columnasLetras):
@@ -298,7 +298,6 @@ def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
         procedimiento = "mixto"
 
     AA = FormaAmpliada(A, b, c, ci, signos, obj, procedimiento, filasLetras, columnasLetras)
-
 
     aux = True
     
@@ -346,7 +345,6 @@ def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
             print("antes de pivoteo2: ", AA)
             AA = Pivoteo2(AA,filasLetras,columnasLetras)
 
-            print(AA)
             aux = True
             continue
             # c = -1*c
@@ -356,18 +354,6 @@ def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
 
             #--------------------------------
 
-        # if not aux and procedimiento == "mixto" and obj == "min":
-             
-        #     print("Entreo a aux normal, para mixto min")
-        #     print(AA)
-        #     AA = elimVarArtificiales(AA, filasLetras, columnasLetras)
-        #     print(AA)
-        #     #  procedimiento = "simplex"
-        #     #  AA = reconstruirSimplex(AA, c, "min", filasLetras, columnasLetras)
-        #     aux = False
-        #     continue
-
-        
         if aux:
             AA = Pivoteo(AA, filasLetras, columnasLetras)
     return AA

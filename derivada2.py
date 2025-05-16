@@ -10,6 +10,9 @@ from sympy import sympify
 from sympy import limit
 import numpy as np
 import sympy as sp
+import sys
+
+epsilon = sys.float_info.epsilon
 
 f = input('Ingrese Funcion a calcular\n')
 x = input('Derivar esta funcion sobre: ')
@@ -19,21 +22,19 @@ deltax = float(input('Valor de deltax: '))
 derivada = d.pDeriv(f, x)
 der = derivada.subs(x, 2)
 
-print('La derivada de la funcion es: ')
-print(derivada.subs(x, 2))
+array = np.arange(0, 1, deltax, dtype=int)
 
-limitexd = d.limitex(f, x)
-fx_dx = limitexd.subs(x, xvalor + deltax)
-fx = limitexd.subs(x, xvalor)
-print(fx_dx)
-print(fx)
-print(deltax)
-limite = (fx_dx - fx)/deltax
-#
-print('El limite es: ')
-print(abs(der - limite))
-if abs(der - limite) < 1e-16:
-    print("olakase")
+array = np.linspace(0, 1, len(array), dtype=float)
+
+for i in range(len(array)):
+    limitexd = eval(f, array[i])
+    fx_dx = (x, array[i] + deltax)
+    fx = limitexd.subs(x, array[i])
+    limite = (fx_dx - fx)/deltax
+    print(f"Limite: {limite}")
+    print(f"Derivada: {der}")
+    if abs(der - limite) < epsilon: # 2.220446049250313e-16
+        print("La derivada es correcta")
 
 # lim deltax->0: f(x + deltax) - f(x)/deltax 
 

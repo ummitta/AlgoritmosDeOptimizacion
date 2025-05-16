@@ -13,7 +13,7 @@ def calcDeriv(funct, x):
     xS = Symbol('x')
     aa = diff(funct, xS, evaluate=True)
     f = lambdify(xS, aa)
-    return aa, f(xS)
+    return aa
 
 def pDeriv(fIn, x):
     pDeriv = calcDeriv(fIn, x)

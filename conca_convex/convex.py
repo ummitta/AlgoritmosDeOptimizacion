@@ -2,9 +2,9 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-# -(x - 1.5)**2 + 1.5
-#  (x - 1)**2 + 1
-#  x**3
+# -(x - 1.5)**2 + 1.5    [0.8, 2.2]
+#  (x - 1)**2 + 1        [0.5, 1.5]
+#  x**3                  [-3 , 3  ]
 
 def e(x, funct):
     f = funct.split(' ')
@@ -16,7 +16,7 @@ def e(x, funct):
         FuncionFinal += str(e)
     return eval(FuncionFinal)
 
-def graficar(f, x0, x1, lam, hola, xmin=-3, xmax=3 ):
+def graficar(f, x0, x1, lam, la_funcion, xmin=-3, xmax=3 ):
 
     x_lambda = lam * x1 + (1 - lam) * x0
     f_x0 = f(x0)
@@ -27,36 +27,42 @@ def graficar(f, x0, x1, lam, hola, xmin=-3, xmax=3 ):
     x = np.linspace(xmin, xmax, 400)
     y = f(x)
 
-    plt.figure(figsize=(8, 5))
+
+    # graficando
+
+    plt.figure(figsize=(8, 6))
+
     plt.plot(x, y, 'k', label='f(x)')
+
     plt.plot([x0, x1], [f_x0, f_x1], 'ro')
     
-
     z = np.linspace(x0, x1, 400)
     w = f(z)
-
     plt.plot(z, w, 'b')
-
-    plt.plot(x_lambda, convex_comb, 'go')
     
     plt.plot([x0, x1], [f_x0, f_x1], 'r--', label=r'$\lambda f(x_1) + (1-\lambda) f(x_0)$')
 
     plt.plot(x0, f_x0, 'ro', label='x0')
     plt.plot(x1, f_x1, 'ro', label='x1')
 
-
     plt.vlines(x0, 0, f_x0, colors='green', linestyles=':', label=r'$f(\lambda x_1 + (1-\lambda)x_0)$')
     plt.vlines(x1, 0, f_x1, colors='green', linestyles=':')
 
-    
+    plt.title(f"LA FUNCION: {la_funcion}")
 
-    plt.title(f"LA FUNCION: {hola}")
+    # eje x e y
     plt.axhline(0,color="black",linewidth=1)
     plt.axvline(0,color="black",linewidth=1)
+    # etiquetas eje x e y
     plt.xlabel('x')
     plt.ylabel('f(x)')
+
+    # malla de fondo o grid
     plt.grid(True)
+
     plt.legend()
+
+    # limites para el cual se graficara la funcion
     plt.ylim(0, max(f_x0, f_x1, f_xlambda) + 1)
     plt.xlim(xmin, xmax)
     plt.show()
@@ -83,7 +89,6 @@ while i < len(array):
     
     if (e(lamda * xa + (1 - lamda) * xb, FuncionIn)) < (lamda * e(xa, FuncionIn) + (1 - lamda) * e(xb, FuncionIn)):
         convexo += 1
-
     if (e(lamda * xa + (1 - lamda) * xb, FuncionIn)) > (lamda * e(xa, FuncionIn) + (1 - lamda) * e(xb, FuncionIn)):
         concavo += 1
     
@@ -91,16 +96,16 @@ while i < len(array):
 
 if convexo == len(array)-2:
     print("la funcion es convexa")
-    hola = "es convexa"
+    la_funcion = "es convexa"
 
 elif concavo == len(array)-2:
     print("la funcion es concava")
-    hola = "es concava"
+    la_funcion = "es concava"
 
 else:
     print("la funcion no es ni concava ni convexa.")
     print(concavo, convexo)
-    hola = "no es ni concava ni convexa"
+    la_funcion = "no es ni concava ni convexa"
 
 # Función convexa (cuadrática)
-graficar(lambda x: eval(FuncionIn), xa, xb, dlambda, hola, xmax=3)
+graficar(lambda x: eval(FuncionIn), xa, xb, dlambda, la_funcion, xmax=3)

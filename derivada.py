@@ -13,12 +13,11 @@ def calcDeriv(funct, x):
     xS = Symbol('x')
     aa = diff(funct, xS, evaluate=True)
     f = lambdify(xS, aa)
-    return aa
+    return aa, f(xS)
 
 def pDeriv(fIn, x):
     pDeriv = calcDeriv(fIn, x)
-    print('La derivada de '+ fIn + ' es: ')
-    print(pDeriv)
+
     return pDeriv
 
 def limitex(fIn, x):

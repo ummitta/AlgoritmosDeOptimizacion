@@ -23,9 +23,16 @@ print('La derivada de la funcion es: ')
 print(derivada.subs(x, 2))
 
 limitexd = d.limitex(f, x)
-lim = limitexd.subs(x, 2)
+fx_dx = limitexd.subs(x, xvalor + deltax)
+fx = limitexd.subs(x, xvalor)
+print(fx_dx)
+print(fx)
+print(deltax)
+limite = (fx_dx - fx)/deltax
 #
-if abs(der - lim) < 1e-16:
+print('El limite es: ')
+print(abs(der - limite))
+if abs(der - limite) < 1e-16:
     print("olakase")
 
 # lim deltax->0: f(x + deltax) - f(x)/deltax 

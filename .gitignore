@@ -2,3 +2,7 @@
 venv/
 mi_entorno/
 .vscode/
+
+.__pycache_/
+__pycache__
+__pycache__/

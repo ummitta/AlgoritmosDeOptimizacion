@@ -27,18 +27,28 @@ def graficar(f, x0, x1, lam, hola, xmin=-3, xmax=3 ):
     x = np.linspace(xmin, xmax, 400)
     y = f(x)
 
-
-
     plt.figure(figsize=(8, 5))
     plt.plot(x, y, 'k', label='f(x)')
     plt.plot([x0, x1], [f_x0, f_x1], 'ro')
     
-    plt.plot(x_lambda, convex_comb, 'go')
 
+    z = np.linspace(x0, x1, 400)
+    w = f(z)
+
+    plt.plot(z, w, 'b')
+
+    plt.plot(x_lambda, convex_comb, 'go')
+    
     plt.plot([x0, x1], [f_x0, f_x1], 'r--', label=r'$\lambda f(x_1) + (1-\lambda) f(x_0)$')
 
-    plt.plot(x_lambda, f_xlambda, 'bo')
-    plt.vlines(x_lambda, 0, f_xlambda, colors='blue', linestyles=':', label=r'$f(\lambda x_1 + (1-\lambda)x_0)$')
+    plt.plot(x0, f_x0, 'ro', label='x0')
+    plt.plot(x1, f_x1, 'ro', label='x1')
+
+
+    plt.vlines(x0, 0, f_x0, colors='green', linestyles=':', label=r'$f(\lambda x_1 + (1-\lambda)x_0)$')
+    plt.vlines(x1, 0, f_x1, colors='green', linestyles=':')
+
+    
 
     plt.title(f"LA FUNCION: {hola}")
     plt.axhline(0,color="black",linewidth=1)

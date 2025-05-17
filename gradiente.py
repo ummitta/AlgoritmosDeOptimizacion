@@ -14,7 +14,8 @@ def Gradiente(vector,funcion,**kwars):
 
     x, y, z = sp.symbols('x y z')
 
-    funcion = sp.sympify(funcion)
+    funcionOriginal = sp.sympify(funcion)
+    
 
     xPuntos = kwars.get('x')
     yPuntos = kwars.get('y')
@@ -28,7 +29,7 @@ def Gradiente(vector,funcion,**kwars):
 
 
     gradienteSimbolica = []
-    gradienteAplicada = []
+    
     print("Gradiente simbolica")
     for i in range(0,len(vector)):
         derivadaEn = vector[i]
@@ -49,21 +50,33 @@ def Gradiente(vector,funcion,**kwars):
             print(f"{funcion} ([{xPuntos[j]},{yPuntos[j]}]) = {valor}")
             # print(valor)
 
-    
+    gradienteAplicada = []
     print("Aproximacion ")
     for i in range(0,len(gradienteSimbolica)):
 
-        funcion = gradienteSimbolica[i]
+
 
         for j in range(0,len(xPuntos)):
 
-            xPunto = xPuntos[j] + xDelta[j]
-            yPunto = yPuntos[j] + yDelta[j]
+            funcionMasDeltaX = funcionOriginal.evalf(subs={x: xPuntos[j]+xDelta[j], y:yPuntos[j]})
+            funcionNormalX = funcionOriginal.evalf(subs={x: xPuntos[j], y:yPuntos[j]}) 
+            aproximacionGradienteX = ( funcionMasDeltaX - funcionNormalX)/ xDelta[j]
+
+            funcionMasDeltaY = funcionOriginal.evalf(subs={x: xPuntos[j], y:yPuntos[j]+xDelta[j]})
+            funcionNormalY = funcionOriginal.evalf(subs={x: xPuntos[j], y:yPuntos[j]}) 
+            aproximacionGradienteY = ( funcionMasDeltaY - funcionNormalY)/ yDelta[j]
+            # aproximacionGradienteY = (funcion.subs([(y,yPunto + yDelta[j])]) - funcion.subs([y,yPunto])) / yDelta[j]
             
-     
-            valor = funcion.subs([(x,xPunto), (y,yPunto)])
-            print(f"{funcion} ([{xPuntos[j]},{yPuntos[j]}]) = {valor}")
-          
+            gradienteAplicada.append(aproximacionGradienteX)
+            gradienteAplicada.append(aproximacionGradienteY)
+            # gradienteAplicada.append(aproximacionGradienteY)
+
+            print(f"Punto ({xPuntos[j]},{yPuntos[j]}) : {aproximacionGradienteX}")
+            print(f"Punto ({xPuntos[j]},{yPuntos[j]}) : {aproximacionGradienteY}")
+            # print(f"Punto {yPunto} : {aproximacionGradienteY}")
+
+
+
 
 
 

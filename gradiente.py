@@ -10,55 +10,45 @@ import sympy as sp
 #  x**2+y**2
 
 def Gradiente(variables,funcion,**kwars):
-    print(kwars)
 
+
+    #se crean los simbolos
     simbolos = sp.symbols((variables))
 
+    #se convierte la funcion a expresion simbolica
     funcionOriginal = sp.sympify(funcion)
 
-    # for var in variables:
-    #     print("var: ", var)
-    #     print("kwars: ", kwars[var][0])
-
-    
-    # for var in range(len(variables),len(kwars)):
-    #     #print({kwars[var]})
-    #     variableDelta = 
-    #     print("var: ", kwars[0])
 
 
+    #tomamos los puntos y los deltas del kwars
     puntos = [kwars[var][0] for var in variables]
     deltas = [kwars[f'delta{var.upper()}'][0] for var in variables]
 
     print("puntos: ",puntos)
     print("deltas: ",deltas)
 
-
+    #se calcula el gradiente simbolico
     gradienteSimbolicos = [sp.diff(funcionOriginal,var) for var in variables]
     print("gradientes simbolicos")
     print(gradienteSimbolicos)
 
     
     print("gradiente siendo evaluado")
+    #se crea un diccionario con los simbolos y sus puntos
     puntosDict = dict(zip(simbolos,puntos))
-    # print('ola: ',ola)
+    # se calcula la gradiente con los puntos dados
     for funcionGradiente in gradienteSimbolicos:
-        print(funcionGradiente)
         print(f"{funcionGradiente}{puntos} = ", funcionGradiente.evalf(subs=puntosDict))
 
 
     gradienteAplicado = []
-    # enumerate(simbolos)
-    # print(deltas)
-    # print(enumerate(simbolos))
+    # se calcula la aproximacion numerica del gradiente
     for i, var in enumerate(simbolos):
         print(i,var)
 
         puntoDelta = puntos.copy()
         
         puntoDelta[i] += deltas[i]
-
-        # print("puntoDelta: ",puntoDelta)
 
         print("aplicando formula de la derivada")
 
@@ -69,29 +59,8 @@ def Gradiente(variables,funcion,**kwars):
 
         print(f"∂f/∂{var} ≈ {operacion}")
         
-    # print("Gradiente simbolica")
-    # for i in range(0,len(vector)):
-    #     derivadaEn = vector[i]
-        
-    #     funcionDerivada = sp.diff(funcion,derivadaEn)
-    
-    #     gradienteSimbolica.append(funcionDerivada)
-    #     print(f"{funcionDerivada}")
 
-    # print("Gradiente evaluado en un punto")
-    # for i in range(0,len(gradienteSimbolica)):
-
-    #     funcion = gradienteSimbolica[i]
-
-    #     for j in range(0,len(xPuntos)):
-         
-    #         valor = funcion.subs([(x,xPuntos[j]), (y,yPuntos[j])])
-    #         print(f"{funcion} ([{xPuntos[j]},{yPuntos[j]}]) = {valor}")
-    #         # print(valor)
-
-
-
-#Gradiente(['x','y'],"x**2 + y**2",**{'x':[2],'y':[3],'deltaX':[0.01],'deltaY':[0.01]})
-
+Gradiente(['x','y'],"x**2 + y**2" ,**{'x':[2],'y':[3],'deltaX':[0.01],'deltaY':[0.01]})
+print("----------------------------------------------")
 
 Gradiente(['x','y','z'],"x**2 + y**2 + z**2" ,**{'x':[2],'y':[3],'z':[4],'deltaX':[0.01],'deltaY':[0.01],'deltaZ':[0.01]})

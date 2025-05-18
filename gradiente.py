@@ -9,77 +9,89 @@ import sympy as sp
 
 #  x**2+y**2
 
-def Gradiente(vector,funcion,**kwars):
+def Gradiente(variables,funcion,**kwars):
     print(kwars)
 
-    x, y, z = sp.symbols('x y z')
+    simbolos = sp.symbols((variables))
 
     funcionOriginal = sp.sympify(funcion)
+
+    # for var in variables:
+    #     print("var: ", var)
+    #     print("kwars: ", kwars[var][0])
+
     
-
-    xPuntos = kwars.get('x')
-    yPuntos = kwars.get('y')
-    xDelta = kwars.get('deltaX')
-    yDelta = kwars.get('deltaY')
-    # print(xPuntos)
-    # print(yPuntos)
-    # print(xDelta)
-    # print(yDelta)
+    # for var in range(len(variables),len(kwars)):
+    #     #print({kwars[var]})
+    #     variableDelta = 
+    #     print("var: ", kwars[0])
 
 
+    puntos = [kwars[var][0] for var in variables]
+    deltas = [kwars[f'delta{var.upper()}'][0] for var in variables]
 
-    gradienteSimbolica = []
+    print("puntos: ",puntos)
+    print("deltas: ",deltas)
+
+
+    gradienteSimbolicos = [sp.diff(funcionOriginal,var) for var in variables]
+    print("gradientes simbolicos")
+    print(gradienteSimbolicos)
+
     
-    print("Gradiente simbolica")
-    for i in range(0,len(vector)):
-        derivadaEn = vector[i]
+    print("gradiente siendo evaluado")
+    puntosDict = dict(zip(simbolos,puntos))
+    # print('ola: ',ola)
+    for funcionGradiente in gradienteSimbolicos:
+        print(funcionGradiente)
+        print(f"{funcionGradiente}{puntos} = ", funcionGradiente.evalf(subs=puntosDict))
+
+
+    gradienteAplicado = []
+    # enumerate(simbolos)
+    # print(deltas)
+    # print(enumerate(simbolos))
+    for i, var in enumerate(simbolos):
+        print(i,var)
+
+        puntoDelta = puntos.copy()
         
-        funcionDerivada = sp.diff(funcion,derivadaEn)
+        puntoDelta[i] += deltas[i]
+
+        # print("puntoDelta: ",puntoDelta)
+
+        print("aplicando formula de la derivada")
+
+        funcionMasDelta = funcionOriginal.evalf(subs=dict(zip(simbolos,puntoDelta)))
+        funcionNormal = funcionOriginal.evalf(subs=puntosDict)
+        operacion = (funcionMasDelta - funcionNormal) / deltas[i]
+        gradienteAplicado.append(operacion)
+
+        print(f"∂f/∂{var} ≈ {operacion}")
+        
+    # print("Gradiente simbolica")
+    # for i in range(0,len(vector)):
+    #     derivadaEn = vector[i]
+        
+    #     funcionDerivada = sp.diff(funcion,derivadaEn)
     
-        gradienteSimbolica.append(funcionDerivada)
-        print(f"{funcionDerivada}")
+    #     gradienteSimbolica.append(funcionDerivada)
+    #     print(f"{funcionDerivada}")
 
-    print("Gradiente evaluado en un punto")
-    for i in range(0,len(gradienteSimbolica)):
+    # print("Gradiente evaluado en un punto")
+    # for i in range(0,len(gradienteSimbolica)):
 
-        funcion = gradienteSimbolica[i]
+    #     funcion = gradienteSimbolica[i]
 
-        for j in range(0,len(xPuntos)):
+    #     for j in range(0,len(xPuntos)):
          
-            valor = funcion.subs([(x,xPuntos[j]), (y,yPuntos[j])])
-            print(f"{funcion} ([{xPuntos[j]},{yPuntos[j]}]) = {valor}")
-            # print(valor)
-
-    gradienteAplicada = []
-    print("Aproximacion ")
-    for i in range(0,len(gradienteSimbolica)):
+    #         valor = funcion.subs([(x,xPuntos[j]), (y,yPuntos[j])])
+    #         print(f"{funcion} ([{xPuntos[j]},{yPuntos[j]}]) = {valor}")
+    #         # print(valor)
 
 
 
-        for j in range(0,len(xPuntos)):
-
-            funcionMasDeltaX = funcionOriginal.evalf(subs={x: xPuntos[j]+xDelta[j], y:yPuntos[j]})
-            funcionNormalX = funcionOriginal.evalf(subs={x: xPuntos[j], y:yPuntos[j]}) 
-            aproximacionGradienteX = ( funcionMasDeltaX - funcionNormalX)/ xDelta[j]
-
-            funcionMasDeltaY = funcionOriginal.evalf(subs={x: xPuntos[j], y:yPuntos[j]+xDelta[j]})
-            funcionNormalY = funcionOriginal.evalf(subs={x: xPuntos[j], y:yPuntos[j]}) 
-            aproximacionGradienteY = ( funcionMasDeltaY - funcionNormalY)/ yDelta[j]
-            # aproximacionGradienteY = (funcion.subs([(y,yPunto + yDelta[j])]) - funcion.subs([y,yPunto])) / yDelta[j]
-            
-            gradienteAplicada.append(aproximacionGradienteX)
-            gradienteAplicada.append(aproximacionGradienteY)
-            # gradienteAplicada.append(aproximacionGradienteY)
-
-            print(f"Punto ({xPuntos[j]},{yPuntos[j]}) : {aproximacionGradienteX}")
-            print(f"Punto ({xPuntos[j]},{yPuntos[j]}) : {aproximacionGradienteY}")
-            # print(f"Punto {yPunto} : {aproximacionGradienteY}")
+#Gradiente(['x','y'],"x**2 + y**2",**{'x':[2],'y':[3],'deltaX':[0.01],'deltaY':[0.01]})
 
 
-
-
-
-
-
-
-Gradiente(['x','y'],"x**2 + y**2",**{'x':[2],'y':[3],'deltaX':[0.01],'deltaY':[0.01]})
+Gradiente(['x','y','z'],"x**2 + y**2 + z**2" ,**{'x':[2],'y':[3],'z':[4],'deltaX':[0.01],'deltaY':[0.01],'deltaZ':[0.01]})

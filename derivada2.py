@@ -1,41 +1,54 @@
 #
-# Codigo De Derivada Numerica para resolucion de problemas de Programacion No Lineal
-# por Nicolas Barros D.
+# Derivada Numérica con estimación de Δx óptimo
+# Autor: Nicolás Barros D.
 #
 
-import derivada as d
-from sympy import diff, Symbol
-from sympy.parsing.sympy_parser import parse_expr
-from sympy import sympify
-from sympy import limit
 import numpy as np
 import sympy as sp
 import sys
 
 epsilon = sys.float_info.epsilon
+print(f"Valor de ε (error absoluto): {epsilon:.2e}\n")
 
-f = input('Ingrese Funcion a calcular\n')
-x = input('Derivar esta funcion sobre: ')
-xvalor = float(input('Valor de x: '))
-deltax = float(input('Valor de deltax: '))
+# x**3 + x + 1
+f_input = input("Ingrese la función f(x): ")
 
-derivada = d.pDeriv(f, x)
-der = derivada.subs(x, 2)
+x_valor = float(input("Valor de x para evaluar la derivada: "))
 
-array = np.arange(0, 1, deltax, dtype=int)
+x_precision = 0
 
-array = np.linspace(0, 1, len(array), dtype=float)
+x = sp.Symbol("x")
+f = sp.sympify(f_input)
 
-for i in range(len(array)):
-    limitexd = eval(f, array[i])
-    fx_dx = (x, array[i] + deltax)
-    fx = limitexd.subs(x, array[i])
-    limite = (fx_dx - fx)/deltax
-    print(f"Limite: {limite}")
-    print(f"Derivada: {der}")
-    if abs(der - limite) < epsilon: # 2.220446049250313e-16
-        print("La derivada es correcta")
+f_deriv = sp.diff(f, x)
+deriv_real = f_deriv.evalf(subs={x: x_valor})
 
-# lim deltax->0: f(x + deltax) - f(x)/deltax 
+print(f"\nDerivada simbólica: f'({x_valor}) = {deriv_real}\n")
 
-#x**3 + x + 1
+# Probar distintos Δx
+print("Δx\t\tDerivada Numérica\tError Absoluto")
+
+mejor_dx = None
+
+
+dx = 1.0
+
+while dx > epsilon:
+    derivada_aprox = sp.limit((f.evalf(subs={x: x_valor + dx}) - f.evalf(subs={x: x_valor}))/dx, dx, 0)
+
+    derivada_real = f_deriv.evalf(subs={x: x_valor})
+    error = abs(derivada_aprox - derivada_real)
+    print("derivada_aprox", derivada_aprox)
+    print("derivada_real", derivada_real)
+    print("error", error)
+
+    if error < epsilon:
+        print(f"dx óptimo encontrado: {dx}")
+        break
+
+    dx /= 2
+
+print(f"dx óptimo: {dx}")
+print(f"Derivada numérica: {derivada_aprox}")
+print(f"Derivada analítica: {derivada_real}")
+print(f"Error absoluto: {error}")

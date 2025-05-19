@@ -24,6 +24,7 @@ print("Δx\t\tDerivada Numérica\tDerivada Aproximada\tError Absoluto")
 print("--------------------------------------------------------------------------------")
 
 derivada_real = f_deriv.evalf(subs={x: x_valor})
+
 dx = 1.0
 
 while dx > epsilon:

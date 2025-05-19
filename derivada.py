@@ -27,7 +27,7 @@ derivada_real = f_deriv.evalf(subs={x: x_valor})
 dx = 1.0
 
 while dx > epsilon:
-    derivada_aprox = sp.limit((f.evalf(subs={x: x_valor + dx}) - f.evalf(subs={x: x_valor}))/dx
+    derivada_aprox = (f.evalf(subs={x: x_valor + dx}) - f.evalf(subs={x: x_valor}))/dx
 
     error = abs(derivada_aprox - derivada_real)
 

@@ -16,19 +16,18 @@ f = sp.sympify(f_input)
 
 f_deriv = sp.diff(f, x)
 
-deriv_real = f_deriv.evalf(subs={x: x_valor})
+derivada_real = f_deriv.evalf(subs={x: x_valor})
 
-print(f"\nDerivada simbólica: f'({x_valor}) = {deriv_real}\n")
+print(f"\nf'(x) = {f_deriv}\n")
+print(f"f'({x_valor}) = {derivada_real}\n")
 
 print("Δx\t\tDerivada Numérica\tDerivada Aproximada\tError Absoluto")
 print("--------------------------------------------------------------------------------")
 
-derivada_real = f_deriv.evalf(subs={x: x_valor})
 
 dx = 1.0
-
 while dx > epsilon:
-    derivada_aprox = (f.evalf(subs={x: x_valor + dx}) - f.evalf(subs={x: x_valor}))/dx
+    derivada_aprox = (f.evalf(subs={x: x_valor + dx}) - f.evalf(subs={x: x_valor}))/dx # limite
 
     error = abs(derivada_aprox - derivada_real)
 
@@ -39,6 +38,7 @@ while dx > epsilon:
         break
 
     dx /= 2
+
 print("Reporte de resultados:")
 print("--------------------------")
 print(f"dx óptimo: {dx}")

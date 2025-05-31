@@ -1,19 +1,16 @@
 
-import numpy as np 
+import numpy as np
 import sympy as sp
 
 #  x**2+y**2
 
-def Gradiente(variables,funcion,**kwars):
-
+def Gradiente(variables, funcion, **kwars):
 
     #se crean los simbolos
     simbolos = sp.symbols((variables))
 
     #se convierte la funcion a expresion simbolica
     funcionOriginal = sp.sympify(funcion)
-
-
 
     #tomamos los puntos y los deltas del kwars
     puntos = [kwars[var][0] for var in variables]

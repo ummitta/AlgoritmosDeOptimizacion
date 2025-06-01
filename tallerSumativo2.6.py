@@ -10,8 +10,6 @@ import numpy as np
 
 
 def TeoremaTaylor(funcion,intervalo,delta,t):
-
-
     x = sp.symbols('x')
 
     funcionSimbolica = sp.simplify(funcion)
@@ -22,31 +20,24 @@ def TeoremaTaylor(funcion,intervalo,delta,t):
 
     print("funcionEvaluada: ", funcionEvaluada)
 
-    
-
     derivadaX = sp.diff(funcionSimbolica,x)
+
     print("derivadaX: ",derivadaX)
-
     print("deltaMatrix: ", deltaMatrix)
-
 
     matrixHessiana = sp.diff(derivadaX,x)
 
-
     print("matrixHessiana: ", matrixHessiana)
-
     print("deltaMatrix: ", deltaMatrix)
-    
-
-
     print(f"{funcionEvaluada } + {derivadaX} * {deltaMatrix} + 1 / 2 * {deltaMatrix} * {matrixHessiana} * {deltaMatrix}")
 
     funcionAproximada = funcionSimbolica + derivadaX * deltaMatrix + (1/2) * deltaMatrix * matrixHessiana * deltaMatrix
 
     funcionAproximadaSimbolica = sp.simplify(funcionAproximada)
-    print("funcionAproximadaSimbolica: ",funcionAproximadaSimbolica)
-    xF = np.linspace(-10, 10, 100)  
 
+    print("funcionAproximadaSimbolica: ",funcionAproximadaSimbolica)
+
+    xF = np.linspace(-10, 10, 100)  
 
     funcionNormalLambificada = sp.lambdify(x, funcionSimbolica, 'numpy')
     y1 = funcionNormalLambificada(xF)
@@ -56,17 +47,14 @@ def TeoremaTaylor(funcion,intervalo,delta,t):
     plt.plot(xF, y1, 'r' , label=f'f1(x) = {funcion}')
     plt.plot(xF, y2, 'b' ,label=f'f2(x) = {funcionAproximadaSimbolica}')
 
-
     plt.axhline(0, color="black", linewidth=1)  
     plt.axvline(0, color="black", linewidth=1)  
 
-    plt.title('Dos funciones en el mismo gráfico')
+    plt.title('Teorema de Taylor')
     plt.xlabel('x')
     plt.ylabel('y')
     plt.legend() 
     plt.grid(True)
     plt.show()
 
-
-
-TeoremaTaylor("2*x + 3",[0,2],0.1,1)
+TeoremaTaylor("-x + cos(x)",[0,2],0.1,1)

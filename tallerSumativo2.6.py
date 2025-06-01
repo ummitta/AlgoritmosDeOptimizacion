@@ -47,13 +47,13 @@ def TeoremaTaylor(funcion,intervalo,delta,t):
     plt.plot(xF, y1, 'r' , label=f'f1(x) = {funcion}')
     plt.plot(xF, y2, 'b' ,label=f'f2(x) = {funcionAproximadaSimbolica}')
 
-    plt.axhline(0, color="black", linewidth=1)  
+    plt.axhline(0, color="black", linewidth=1)
     plt.axvline(0, color="black", linewidth=1)  
 
     plt.title('Teorema de Taylor')
     plt.xlabel('x')
     plt.ylabel('y')
-    plt.legend() 
+    plt.legend()
     plt.grid(True)
     plt.show()
 

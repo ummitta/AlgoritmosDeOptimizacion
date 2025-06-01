@@ -1,13 +1,19 @@
 import sympy as sp
 import numpy as np
 
-def analizar_puntocrtico(f_expr, punto):
+def analizar_puntocrtico(f_expr, punto, deltaxs):
     x, y = sp.symbols('x y')
-    
+
+    f_expr = f.subs({x: x + deltaxs[0], y: y + deltaxs[1]})
+    f_expr = sp.simplify(f_expr)
+
+    # creacion de la función simbólica
     f_xx = sp.diff(f_expr, x, x)
     f_yy = sp.diff(f_expr, y, y)
     f_xy = sp.diff(f_expr, x, y)
     f_yx = sp.diff(f_expr, y, x)
+
+    # creacion de la matriz Hessiana
     f_xx_val = float(f_xx.subs({x: punto[0], y: punto[1]}))
     f_yy_val = float(f_yy.subs({x: punto[0], y: punto[1]}))
     f_xy_val = float(f_xy.subs({x: punto[0], y: punto[1]}))
@@ -34,10 +40,11 @@ def analizar_puntocrtico(f_expr, punto):
     else:
         return "No hay información suficiente"
 
-# Ejemplo de uso
 x, y = sp.symbols('x y')
-f = x**2 + 2*y**2  # Mínimo en (0, 0)
-punto = (0, 0)
+f_input = input("Ingrese la función f(x, y): ")
+f = sp.sympify(f_input)
+punto_critico = tuple(map(float, input("Ingrese el punto crítico (x, y): ").strip().split(',')))
+deltaxs = tuple(map(float, input("Ingrese el valor de los deltax: ").strip().split(',')))
 
-resultado = analizar_puntocrtico(f, punto)
+resultado = analizar_puntocrtico(f, punto_critico, deltaxs)
 print("Resultado:", resultado)

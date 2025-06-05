@@ -1,0 +1,15 @@
+test_taller2.7.txt
+x**2 + 2*y**2 + 3
+0,0
+0.01,0.01
+Resultado esperado: Mínimo local
+
+-x**2 - 4*y**2 + 5
+0,0
+0.01,0.01
+Resultado esperado: Máximo local
+
+x**3 - 3*x*y**2
+0,0
+0.01,0.01
+Resultado esperado: Punto de silla

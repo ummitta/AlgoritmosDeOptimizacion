@@ -30,8 +30,10 @@ def newton(funcion,puntoUsuario,t,epsilon):
 
         puntoNuevo = punto - t * (gradientePunto/hessianaPunto)
 
-        print(f" hessiana: {hessianaPunto} ")
-        print(f"punto: {punto} | gradiente: {gradientePunto} | hessiana: {float(hessianaPunto):.4f}  | puntoNuevo: {puntoNuevo}  ")
+        #print(f"punto: {punto} | gradiente: {gradientePunto} | hessiana: {hessianaPunto} | puntoNuevo: {puntoNuevo}  ")
+        # print(f" hessiana: {hessianaPunto} ")
+
+        print(f"punto: {float(punto):.4f} | gradiente: {float(gradientePunto):.4f} | hessiana: {float(hessianaPunto):.4f}  | puntoNuevo: {float(puntoNuevo):.4f}  ")
 
         if sp.Abs(puntoNuevo - punto) <= epsilon:
             verificacion = False
@@ -44,8 +46,12 @@ def newton(funcion,puntoUsuario,t,epsilon):
 epsilon = np.finfo(float).eps
 
 punto = newton("x**3 - x - 2",2,1,epsilon)
-
 print(punto)
+
+
+# punto2 = newton("x**2 - 2", 1.0, 1, epsilon)
+
+# print(punto2)
 
 
 #  ¿Cuál es el problema más importante en el algoritmo para el método de Newton con múltiples variables?
@@ -53,4 +59,5 @@ print(punto)
 # Para responder esta pregunta, podemos ver que nuestro codigo, ocupamos la derivada como un numero. ya que solamente trabajamos con funciones de una variable
 
 # Pero si la funcion tiene mas varaibales, la hessiana no es un numero, sino que una matriz, en cada paso del meotodo, es necesario invertir esta matriz,
-# lo cual tiene un costo computacional n^3, lo cual significa que va a mas tiempo y mas recursos, y no siempre se puede invertir: si la matriz no tiene inversa, el método no puede avanzar.
+# lo cual tiene un costo computacional n^3, lo cual significa que va a mas tiempo y mas recursos, y no siempre se puede invertir: si la matriz no tiene inversa, 
+# el método no puede avanzar.

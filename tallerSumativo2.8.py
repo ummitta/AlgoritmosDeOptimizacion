@@ -1,3 +1,4 @@
+# Taller Sumativo 2.8: Algoritmo del gradiente descendente con t fijo
 import sympy as sp
 import numpy as np 
 import math as ma

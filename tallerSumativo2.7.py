@@ -1,3 +1,4 @@
+# Taller Sumativo 2.7: Tipo de punto crítico
 import sympy as sp
 import numpy as np
 

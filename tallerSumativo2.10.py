@@ -1,4 +1,4 @@
-
+# Taller Sumativo 2.10: Método de Newton
 import sympy as sp
 import numpy as np
 

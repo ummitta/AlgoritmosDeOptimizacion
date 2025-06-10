@@ -1,6 +1,0 @@
-{
-    "python.REPL.enableREPLSmartSend": false,
-    "files.associations": {
-        "iostream": "cpp"
-    }
-}

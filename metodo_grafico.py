@@ -1,3 +1,6 @@
+# Algoritmo de Programación Lineal por el Método Gráfico
+# Autores: Nicolas Barros, Maximo Mora
+
 import numpy as np
 from matplotlib import pyplot as plt
 import random as ra

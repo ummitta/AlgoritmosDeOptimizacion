@@ -1,3 +1,6 @@
+# Taller Sumativo 2.6: Matriz hessiana y teorema de Taylor.
+# Autores: Nicolas Barros, Maximo Mora
+
 import matplotlib.pyplot as plt
 import sympy as sp
 import numpy as np

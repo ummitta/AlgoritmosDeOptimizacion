@@ -1,3 +1,5 @@
+# Taller Sumativo 2.10: Método de Newton
+# Autores: Nicolas Barros, Maximo Mora
 
 import sympy as sp
 import numpy as np

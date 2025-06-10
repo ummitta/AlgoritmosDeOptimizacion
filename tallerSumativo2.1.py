@@ -1,3 +1,5 @@
+# Taller Sumativo 2.1: Algoritmo de solución de modelos de programación no lineal mediante fuerza bruta.
+# Autores: Nicolas Barros, Maximo Mora
 
 import numpy as np
 

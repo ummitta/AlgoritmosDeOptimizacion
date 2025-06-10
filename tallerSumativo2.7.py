@@ -1,3 +1,6 @@
+# Taller Sumativo 2.7: Tipo de punto crítico
+# Autores: Nicolas Barros, Maximo Mora
+
 import sympy as sp
 import numpy as np
 

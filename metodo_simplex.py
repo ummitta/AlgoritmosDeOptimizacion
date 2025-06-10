@@ -1,3 +1,6 @@
+# Algoritmo Simplex para resolver problemas de programación lineal
+# Autores: Nicolas Barros, Maximo Mora
+
 import numpy as np
 import matplotlib.pyplot as plt
 from tabulate import tabulate

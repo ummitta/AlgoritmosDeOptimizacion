@@ -1,3 +1,6 @@
+# Taller Sumativo 2.3: Derivada numerica
+# Autores: Nicolas Barros, Maximo Mora
+
 import numpy as np
 import sympy as sp
 import sys

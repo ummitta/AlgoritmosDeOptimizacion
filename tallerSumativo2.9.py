@@ -1,4 +1,6 @@
 # Taller Sumativo 2.9: Algoritmo del gradiente descendente con actualización de t por el método de Barzilai-Borwein
+# Autores: Nicolas Barros, Maximo Mora
+
 import sympy as sp
 import numpy as np
 import math as ma

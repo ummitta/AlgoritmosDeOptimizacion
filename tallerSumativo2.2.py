@@ -1,3 +1,6 @@
+# Taller Sumativo 2.2: Concavidad y Convexidad
+# Autores: Nicolas Barros, Maximo Mora
+
 import math
 import numpy as np
 import matplotlib.pyplot as plt

@@ -1,3 +1,5 @@
+# Taller Sumativo 2.4: Gradiente de una funcion
+# Autores: Nicolas Barros, Maximo Mora
 
 import numpy as np
 import sympy as sp

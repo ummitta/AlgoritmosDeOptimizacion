@@ -1,4 +1,6 @@
 # Taller Sumativo 2.8: Algoritmo del gradiente descendente con t fijo
+# Autores: Nicolas Barros, Maximo Mora
+
 import sympy as sp
 import numpy as np 
 import math as ma

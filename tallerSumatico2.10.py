@@ -27,7 +27,9 @@ def newton(funcion,puntoUsuario,t,epsilon):
         gradientePunto = derivada.subs(x,punto)
 
         hessianaPunto = hessiana.subs(x,punto)
+
         #print("derivada: ", derivada)
+
         #print("hessiaana: ", hessiana)
 
         if hessianaPunto == 0:
@@ -56,3 +58,11 @@ epsilon = np.finfo(float).eps
 punto = newton("x**3 - x - 2",2,1,epsilon)
 
 print(punto)
+
+
+#  ¿Cuál es el problema más importante en el algoritmo para el método de Newton con múltiples variables?
+#
+# Para responder esta pregunta, podemos ver que nuestro codigo, ocupamos la derivada como un numero. ya que solamente trabajamos con funciones de una variable
+
+# Pero si la funcion tiene mas varaibales, la hessiana no es un numero, sino que una matriz, en cada paso del meotodo, es necesario invertir esta matriz,
+# lo cual tiene un costo computacional n^3, lo cual significa que va a mas tiempo y mas recursos, y no siempre se puede invertir: si la matriz no tiene inversa, el método no puede avanzar.

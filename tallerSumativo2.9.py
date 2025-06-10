@@ -97,3 +97,8 @@ resultado = grad_des(func_grad, xys, t, e)
 
 reporte_resultados(resultado, e, t, xys)
 graficar_trayectoria(func_grad, resultado[2])
+
+
+# McCormick function:
+# f(x, y) = sin(x + y) + (x - y)**2 - 1.5*x + 2.5*y + 1
+# puntos iniciales: (0, 0), (1, 1), (-1, -1)

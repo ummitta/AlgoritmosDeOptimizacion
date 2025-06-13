@@ -9,13 +9,14 @@ import matplotlib.pyplot as plt
 def normal(xy):
     return np.linalg.norm(xy)
 
-def reporte_resultados(resultado, e, t, xys):
+def reporte_resultados(resultado, func_grad, e, t, xys):
     print("Gradiente Descendente con Barzilai-Borwein")
     print("-------------------------------------------")
     print("Función:", func_grad)
     print("Punto inicial:", xys)
     print("Epsilon:", e)
     print("Resultado x e y:   ", resultado[0])
+    print("Valor de la función en el resultado:", func_grad.subs({sp.symbols('x'): resultado[0][0], sp.symbols('y'): resultado[0][1]}))
     print("Gradiente Evaluado:", resultado[1])
     print("Iteraciones:", len(resultado[2]) - 1)
 
@@ -95,10 +96,9 @@ t = float(input("Ingrese la tasa de aprendizaje inicial (ej. 0.1): "))
 
 resultado = grad_des(func_grad, xys, t, e)
 
-reporte_resultados(resultado, e, t, xys)
+reporte_resultados(resultado, func_grad, e, t, xys)
 graficar_trayectoria(func_grad, resultado[2])
 
-
-# McCormick function:
+# McCormick function
 # f(x, y) = sin(x + y) + (x - y)**2 - 1.5*x + 2.5*y + 1
-# puntos iniciales: (0, 0), (1, 1), (-1, -1)
+# puntos iniciales: (0, 0), (-1, 1), (1, -1)

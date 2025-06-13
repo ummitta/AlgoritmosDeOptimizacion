@@ -1,4 +1,4 @@
-# Algoritmo de Programación Lineal por el Método Gráfico
+# Algoritmo de Programación Lineal mediante el Método Gráfico
 # Autores: Nicolas Barros, Maximo Mora
 
 import numpy as np

@@ -11,10 +11,9 @@ def newton(funcion,puntoUsuario,t,epsilon):
     derivada = sp.diff(funcion,x)
 
     hessiana = sp.diff(derivada,x)
-    print("derivada: ", derivada)
-    print("hessiaana: ", hessiana)
 
-    funcionSimbolica = sp.sympify(funcion)
+    print("derivada: ", derivada)
+    print("hessiana: ", hessiana)
 
     punto = puntoUsuario
 
@@ -45,7 +44,7 @@ def newton(funcion,puntoUsuario,t,epsilon):
 
 epsilon = np.finfo(float).eps
 
-punto = newton("x**3 - x - 2",2,1,epsilon)
+punto = newton("x**3 - x - 2", 2,1,epsilon)
 print(punto)
 
 

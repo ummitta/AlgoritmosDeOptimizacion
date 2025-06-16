@@ -1,5 +1,7 @@
 import random as ra, math as ma, time as ti, requests as req, pandas as pd, numpy as np, statistics as st, matplotlib.pyplot as plt, scipy.spatial as sp
 
+from scipy.spatial import ConvexHull
+
 def download_file(url, local_filename):
     with req.get(url, stream=True) as r:
         r.raise_for_status()
@@ -39,9 +41,6 @@ votacion_filtrada = votacion_filtrada[["icpsr", "cast_code"]]
 combinado = pd.merge(votacion_filtrada, members, on="icpsr", how="inner")
 
 coords = list(zip(combinado["nominate_dim1"], combinado["nominate_dim2"]))
-
-print(coords)  # Muestra las primeras 5 coordenadas para verificar
-print(f"Total de representantes: {len(coords)}")
 
 # ALGORITMO GENETICO PARA LA COALICIÓN DE REPRESENTANTES
 # Este código implementa un algoritmo genético para encontrar una coalición de representantes
@@ -159,23 +158,17 @@ def verificar_restriccion(cromosoma, q=Q):
     return cromosoma
 
 def algoritmo_genetico(coords, max_iter=10000):
-    poblacion = generar_poblacion_inicial(N_REPRESENTANTES, Q, TAM_POBLACION)
-
-    fitness_vals = [calcular_fitness(crom, coords) for crom in poblacion]
-
-    best_fit = min(fitness_vals)
-
-    best_solution = poblacion[fitness_vals.index(best_fit)]
     iteraciones = 0
-
+    poblacion = generar_poblacion_inicial(N_REPRESENTANTES, Q, TAM_POBLACION)
+    fitness_vals = [calcular_fitness(crom, coords) for crom in poblacion]
+    best_fit = min(fitness_vals)
+    best_solution = poblacion[fitness_vals.index(best_fit)]
     historial_fitness = [best_fit]
 
-    print("Mejor fitness inicial:", best_fit)
-
     while iteraciones < max_iter:
-        iteraciones += 1
         nueva_poblacion = []
         while len(nueva_poblacion) < N_REPRESENTANTES:
+            iteraciones += 1
             padre1, padre2 = seleccionar_padres(poblacion, fitness_vals)
 
             hijo1, hijo2 = cruzar(padre1, padre2)
@@ -208,43 +201,49 @@ def algoritmo_genetico(coords, max_iter=10000):
 
     return best_solution, best_fit, iteraciones, historial_fitness
 
-best_solution, best_fit, iteraciones, historial_fitness = algoritmo_genetico(coords)
-print("Mejor fitness:", best_fit)
+# Ejecución del algoritmo genético
 
-N_RUNS = 3
+N_RUNS = 2
 FITNESS_GOAL = 9686.93831
 
 fitness_list = []
-iters_list = []
 time_list = []
 fitness_historial_total = []
+n_iteraciones = 0
 
 for run in range(N_RUNS):
+    print(f"\nEjecución {run + 1} de {N_RUNS}...")
+
     t0 = ti.time()
     best_solution, best_fit, iteraciones, historial_fitness = algoritmo_genetico(coords)
     t1 = ti.time()
 
     fitness_list.append(best_fit)
-    iters_list.append(iteraciones)
-    time_list.append(t1 - t0)
+    print(f"iter:", iteraciones)
+    n_iteraciones += iteraciones
+    
+
+    time = t1 - t0
+    print("time", time)
+    time_list.append(time)    
     fitness_historial_total.append(historial_fitness)
 
 
 # Estadisticas
+fitness_mean = st.mean(fitness_list)    # promedio de fitness obtenidos a partir de una ejecucion del algoritmo genético (N_RUNS veces)
+iters_mean = n_iteraciones / N_RUNS     # promedio de iteraciones obtenidas a partir de una ejecucion del algoritmo genético (N_RUNS veces)
+time_mean = st.mean(time_list)          # promedio de tiempos obtenidos a partir de una ejecucion del algoritmo genético (N_RUNS veces)
 
-fitness_mean = st.mean(fitness_list)
-fitness_std = st.stdev(fitness_list)
+fitness_historial_total = [item for sublist in fitness_historial_total for item in sublist] # promedio de cada una de las iteraciones de fitness obtenidas a partir de una ejecucion del algoritmo genético mean(alg_gen)*(N_RUNS veces)
+fitness_historial_mean = st.mean(fitness_historial_total) # promedio del promedio de fitnesses 
 
-iters_mean = st.mean(iters_list)
-iters_std = st.stdev(iters_list)
-
-time_mean = st.mean(time_list)
-time_std = st.stdev(time_list)
-
-fitness_historial_total = [item for sublist in fitness_historial_total for item in sublist]
-fitness_historial_mean = st.mean(fitness_historial_total)
+fitness_historial_mean_obj = (sum((f - FITNESS_GOAL) ** 2 for f in fitness_historial_total) / len(fitness_historial_total)) ** 0.5 # desviación estándar del fitness promedio
 
 mean_fitness_historial = (1- abs(FITNESS_GOAL - fitness_historial_mean) / FITNESS_GOAL) * 100
+
+
+time = sum(time_list) / len(time_list)
+print("time", time)
 
 print("Historial de fitness promedio:", fitness_historial_mean)
 
@@ -255,22 +254,18 @@ print(f"Mejor fitness promedio: {fitness_mean:.5f}")
 
 print(f"Resultado esperado: {FITNESS_GOAL:.5f}")
 print(f"Precisión: {mean_fitness_historial:.2f}%")
-print(f"Desviación estándar del fitness: {fitness_std:.5f}")
+print(f"Desviación estándar del fitness: {fitness_historial_mean_obj:.5f}")
 print(f"Promedio iteraciones: {iters_mean:.2f}")
-print(f"Desviación estándar de iteraciones: {iters_std:.2f}")
+print(f"Desviación estándar de iteraciones: {123:.2f}")
 print(f"Tiempo promedio (s): {time_mean:.4f}")
-print(f"Desviación estándar del tiempo: {time_std:.4f}")
+print(f"Desviación estándar del tiempo: {123:.4f}")
 
 print("="*30 + "\nFIN DEL REPORTE\n" + "="*30)
-
-
-
 
 # Visualización de los resultados
 
 def partido_a_color(party_code):
-
-    return 'blue' if party_code == 100 else 'red'  #
+    return 'blue' if party_code == 100 else 'red'
 
 colores = combinado["party_code"].apply(partido_a_color).values
 
@@ -288,7 +283,7 @@ plt.scatter(x[no_CGM], y[no_CGM], c=colores[no_CGM], marker='x', label='No perte
 plt.scatter(x[es_CGM], y[es_CGM], c=colores[es_CGM], marker='o', edgecolor='k', s=40, label='Pertenece')
 
 coords_CGM = np.column_stack((x[es_CGM], y[es_CGM]))
-hull = sp.ConvexHull(coords_CGM)
+hull = ConvexHull(coords_CGM)
 for simplex in hull.simplices:
     plt.plot(coords_CGM[simplex, 0], coords_CGM[simplex, 1], 'm-')
 

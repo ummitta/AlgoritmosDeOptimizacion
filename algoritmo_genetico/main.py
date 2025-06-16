@@ -1,4 +1,4 @@
-import random as ra, math as ma, time as ti, requests as req, pandas as pd, numpy as np, statistics as st
+import random as ra, math as ma, time as ti, requests as req, pandas as pd, numpy as np, statistics as st, matplotlib.pyplot as plt, scipy.spatial as sp
 
 def download_file(url, local_filename):
     with req.get(url, stream=True) as r:
@@ -11,7 +11,6 @@ def download_file(url, local_filename):
 members = pd.read_csv(".\Anexos\HSall_members.csv", encoding="utf-8")
 
 votes = pd.read_csv(".\Anexos\RH0941234.csv", encoding="utf-8")
-
 
 # cast_code == 0  → no era miembro aún
 # cast_code == 1  → votó a favor
@@ -41,6 +40,7 @@ combinado = pd.merge(votacion_filtrada, members, on="icpsr", how="inner")
 
 coords = list(zip(combinado["nominate_dim1"], combinado["nominate_dim2"]))
 
+print(coords)  # Muestra las primeras 5 coordenadas para verificar
 print(f"Total de representantes: {len(coords)}")
 
 # ALGORITMO GENETICO PARA LA COALICIÓN DE REPRESENTANTES
@@ -128,14 +128,18 @@ def cruzar(padre1, padre2):
 
 def mutar(cromosoma, prob_mut=PROB_MUTACION):
     if ra.random() < prob_mut:
-        n = len(cromosoma)
         indices_uno = [i for i, bit in enumerate(cromosoma) if bit == 1]
         indices_cero = [i for i, bit in enumerate(cromosoma) if bit == 0]
-        if indices_uno and indices_cero:
+
+        # Verificación robusta
+        if len(indices_uno) > 0 and len(indices_cero) > 0:
             idx1 = ra.choice(indices_uno)
             idx0 = ra.choice(indices_cero)
-            cromosoma[idx1] = 0
-            cromosoma[idx0] = 1
+            cromosoma[idx1], cromosoma[idx0] = 0, 1
+        else:
+            # Fuerza una nueva mutación válida al regenerar uno de los grupos
+            # (esto rara vez debería pasar si las restricciones se cumplen)
+            cromosoma = verificar_restriccion(cromosoma)
     return cromosoma
 
 def verificar_restriccion(cromosoma, q=Q):
@@ -156,47 +160,58 @@ def verificar_restriccion(cromosoma, q=Q):
 
 def algoritmo_genetico(coords, max_iter=10000):
     poblacion = generar_poblacion_inicial(N_REPRESENTANTES, Q, TAM_POBLACION)
+
     fitness_vals = [calcular_fitness(crom, coords) for crom in poblacion]
+
     best_fit = min(fitness_vals)
+
     best_solution = poblacion[fitness_vals.index(best_fit)]
-    iteracion = 0
+    iteraciones = 0
 
-    historial_fitness = [best_fit]  # aquí se guarda el mejor fitness de cada iteración
+    historial_fitness = [best_fit]
 
-    while iteracion < max_iter:
-        iteracion += 1
+    print("Mejor fitness inicial:", best_fit)
+
+    while iteraciones < max_iter:
+        iteraciones += 1
         nueva_poblacion = []
-        while len(nueva_poblacion) < TAM_POBLACION:
+        while len(nueva_poblacion) < N_REPRESENTANTES:
             padre1, padre2 = seleccionar_padres(poblacion, fitness_vals)
+
             hijo1, hijo2 = cruzar(padre1, padre2)
+
             hijo1 = mutar(hijo1, PROB_MUTACION)
             hijo2 = mutar(hijo2, PROB_MUTACION)
+
             hijo1 = verificar_restriccion(hijo1, Q)
             hijo2 = verificar_restriccion(hijo2, Q)
+
             nueva_poblacion.append(hijo1)
-            if len(nueva_poblacion) < TAM_POBLACION:
+
+            if len(nueva_poblacion) < N_REPRESENTANTES:
                 nueva_poblacion.append(hijo2)
+
         poblacion = nueva_poblacion
+
         fitness_vals = [calcular_fitness(crom, coords) for crom in poblacion]
+
         current_best = min(fitness_vals)
+
+        historial_fitness.append(current_best)
+
         if current_best < best_fit:
             best_fit = current_best
             best_solution = poblacion[fitness_vals.index(current_best)]
-        historial_fitness.append(best_fit)
-
+    
         if best_fit <= 9686.93831:
             break
 
-    return best_solution, best_fit, iteracion, historial_fitness
+    return best_solution, best_fit, iteraciones, historial_fitness
 
-# Para ejecutar el algoritmo, se debe llamar a algoritmo_genetico(coords) una vez cargados los datos.
-
-print("coords:", coords)
-
-best_solution, best_fit, iters, historial_fitness = algoritmo_genetico(coords)
+best_solution, best_fit, iteraciones, historial_fitness = algoritmo_genetico(coords)
 print("Mejor fitness:", best_fit)
 
-N_RUNS = 10  # número de ejecuciones para estadísticas
+N_RUNS = 3
 FITNESS_GOAL = 9686.93831
 
 fitness_list = []
@@ -206,15 +221,14 @@ fitness_historial_total = []
 
 for run in range(N_RUNS):
     t0 = ti.time()
-    best_solution, best_fit, iters, historial_fitness = algoritmo_genetico(coords)
+    best_solution, best_fit, iteraciones, historial_fitness = algoritmo_genetico(coords)
     t1 = ti.time()
 
     fitness_list.append(best_fit)
-    iters_list.append(iters)
+    iters_list.append(iteraciones)
     time_list.append(t1 - t0)
     fitness_historial_total.append(historial_fitness)
 
-print("Historial de fitness:", fitness_historial_total)
 
 # Estadisticas
 
@@ -227,15 +241,55 @@ iters_std = st.stdev(iters_list)
 time_mean = st.mean(time_list)
 time_std = st.stdev(time_list)
 
-precision = (1 - abs(FITNESS_GOAL - fitness_mean) / FITNESS_GOAL) * 100
+fitness_historial_total = [item for sublist in fitness_historial_total for item in sublist]
+fitness_historial_mean = st.mean(fitness_historial_total)
 
-print("\n" + "="*30 + "\nRESULTADOS\n" + "="*30)
+mean_fitness_historial = (1- abs(FITNESS_GOAL - fitness_historial_mean) / FITNESS_GOAL) * 100
+
+print("Historial de fitness promedio:", fitness_historial_mean)
+
+print("\n" + "="*30 + "\nREPORTE DE RESULTADOS\n" + "="*30)
+
+print(f"Mejor fitness encontrado: {best_fit:.5f}")
+print(f"Mejor fitness promedio: {fitness_mean:.5f}")
 
 print(f"Resultado esperado: {FITNESS_GOAL:.5f}")
-print(f"Precisión: {precision:.2f}%")
-print(f"Fitness promedio: {fitness_mean:.5f}")
+print(f"Precisión: {mean_fitness_historial:.2f}%")
 print(f"Desviación estándar del fitness: {fitness_std:.5f}")
-print(f"Iteraciones promedio: {iters_mean:.2f}")
+print(f"Promedio iteraciones: {iters_mean:.2f}")
 print(f"Desviación estándar de iteraciones: {iters_std:.2f}")
 print(f"Tiempo promedio (s): {time_mean:.4f}")
 print(f"Desviación estándar del tiempo: {time_std:.4f}")
+
+print("="*30 + "\nFIN DEL REPORTE\n" + "="*30)
+
+
+
+
+# Visualización de los resultados
+
+def partido_a_color(party_code):
+
+    return 'blue' if party_code == 100 else 'red'  #
+
+colores = combinado["party_code"].apply(partido_a_color).values
+
+combinado["CGM"] = best_solution 
+
+x = combinado["nominate_dim1"].values
+y = combinado["nominate_dim2"].values
+
+es_CGM = combinado["CGM"] == 1
+no_CGM = ~es_CGM
+
+plt.figure(figsize=(8,8))
+plt.style.use('dark_background')
+plt.scatter(x[no_CGM], y[no_CGM], c=colores[no_CGM], marker='x', label='No pertenece')
+plt.scatter(x[es_CGM], y[es_CGM], c=colores[es_CGM], marker='o', edgecolor='k', s=40, label='Pertenece')
+
+coords_CGM = np.column_stack((x[es_CGM], y[es_CGM]))
+hull = sp.ConvexHull(coords_CGM)
+for simplex in hull.simplices:
+    plt.plot(coords_CGM[simplex, 0], coords_CGM[simplex, 1], 'm-')
+
+plt.fill(coords_CGM[hull.vertices,0], coords_CGM[hull.vertices,1], 'm', alpha=0.15)

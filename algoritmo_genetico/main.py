@@ -208,6 +208,7 @@ FITNESS_GOAL = 9686.93831
 
 fitness_list = []
 time_list = []
+iter_list = []
 fitness_historial_total = []
 n_iteraciones = 0
 
@@ -221,6 +222,7 @@ for run in range(N_RUNS):
     fitness_list.append(best_fit)
     print(f"iter:", iteraciones)
     n_iteraciones += iteraciones
+    iter_list.append(iteraciones)
     
 
     time = t1 - t0
@@ -237,10 +239,11 @@ time_mean = st.mean(time_list)          # promedio de tiempos obtenidos a partir
 fitness_historial_total = [item for sublist in fitness_historial_total for item in sublist] # promedio de cada una de las iteraciones de fitness obtenidas a partir de una ejecucion del algoritmo genético mean(alg_gen)*(N_RUNS veces)
 fitness_historial_mean = st.mean(fitness_historial_total) # promedio del promedio de fitnesses 
 
-fitness_historial_mean_obj = (sum((f - FITNESS_GOAL) ** 2 for f in fitness_historial_total) / len(fitness_historial_total)) ** 0.5 # desviación estándar del fitness promedio
 
-mean_fitness_historial = (1- abs(FITNESS_GOAL - fitness_historial_mean) / FITNESS_GOAL) * 100
 
+precision_respecto_objetivo = (1 - abs(FITNESS_GOAL - fitness_historial_mean) / FITNESS_GOAL) * 100
+
+desviacion_fitness_respecto_objetivo = (sum((f - FITNESS_GOAL) ** 2 for f in fitness_historial_total) / len(fitness_historial_total)) ** 0.5 # desviación estándar del fitness promedio
 
 time = sum(time_list) / len(time_list)
 print("time", time)
@@ -249,16 +252,15 @@ print("Historial de fitness promedio:", fitness_historial_mean)
 
 print("\n" + "="*30 + "\nREPORTE DE RESULTADOS\n" + "="*30)
 
-print(f"Mejor fitness encontrado: {best_fit:.5f}")
-print(f"Mejor fitness promedio: {fitness_mean:.5f}")
+print(f"Mejor solución encontrada: {best_solution}")
 
 print(f"Resultado esperado: {FITNESS_GOAL:.5f}")
-print(f"Precisión: {mean_fitness_historial:.2f}%")
-print(f"Desviación estándar del fitness: {fitness_historial_mean_obj:.5f}")
+print(f"Precisión: {precision_respecto_objetivo:.2f}%")
+print(f"Desviación estándar del fitness: {desviacion_fitness_respecto_objetivo:.5f}")
 print(f"Promedio iteraciones: {iters_mean:.2f}")
-print(f"Desviación estándar de iteraciones: {123:.2f}")
+print(f"Desviación estándar de iteraciones: {st.stdev(iter_list):.2f}")
 print(f"Tiempo promedio (s): {time_mean:.4f}")
-print(f"Desviación estándar del tiempo: {123:.4f}")
+print(f"Desviación estándar del tiempo: {st.stdev(time_list):.4f}")
 
 print("="*30 + "\nFIN DEL REPORTE\n" + "="*30)
 
@@ -278,7 +280,6 @@ es_CGM = combinado["CGM"] == 1
 no_CGM = ~es_CGM
 
 plt.figure(figsize=(8,8))
-plt.style.use('dark_background')
 plt.scatter(x[no_CGM], y[no_CGM], c=colores[no_CGM], marker='x', label='No pertenece')
 plt.scatter(x[es_CGM], y[es_CGM], c=colores[es_CGM], marker='o', edgecolor='k', s=40, label='Pertenece')
 
@@ -288,3 +289,5 @@ for simplex in hull.simplices:
     plt.plot(coords_CGM[simplex, 0], coords_CGM[simplex, 1], 'm-')
 
 plt.fill(coords_CGM[hull.vertices,0], coords_CGM[hull.vertices,1], 'm', alpha=0.15)
+
+plt.show()

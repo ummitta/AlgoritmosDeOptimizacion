@@ -203,7 +203,7 @@ def algoritmo_genetico(coords, max_iter=10000):
 
 # Ejecución del algoritmo genético
 
-N_RUNS = 2
+N_RUNS = 10 # Número de ejecuciones del algoritmo genético para obtener estadísticas
 FITNESS_GOAL = 9686.93831
 
 fitness_list = []
@@ -224,7 +224,6 @@ for run in range(N_RUNS):
     n_iteraciones += iteraciones
     iter_list.append(iteraciones)
     
-
     time = t1 - t0
     print("time", time)
     time_list.append(time)    
@@ -239,11 +238,9 @@ time_mean = st.mean(time_list)          # promedio de tiempos obtenidos a partir
 fitness_historial_total = [item for sublist in fitness_historial_total for item in sublist] # promedio de cada una de las iteraciones de fitness obtenidas a partir de una ejecucion del algoritmo genético mean(alg_gen)*(N_RUNS veces)
 fitness_historial_mean = st.mean(fitness_historial_total) # promedio del promedio de fitnesses 
 
-
-
 precision_respecto_objetivo = (1 - abs(FITNESS_GOAL - fitness_historial_mean) / FITNESS_GOAL) * 100
 
-desviacion_fitness_respecto_objetivo = (sum((f - FITNESS_GOAL) ** 2 for f in fitness_historial_total) / len(fitness_historial_total)) ** 0.5 # desviación estándar del fitness promedio
+desviacion_fitness_respecto_objetivo = (sum((f - FITNESS_GOAL) ** 2 for f in fitness_list) / len(fitness_list)) ** 0.5 # desviación estándar del fitness promedio
 
 time = sum(time_list) / len(time_list)
 print("time", time)
@@ -251,8 +248,6 @@ print("time", time)
 print("Historial de fitness promedio:", fitness_historial_mean)
 
 print("\n" + "="*30 + "\nREPORTE DE RESULTADOS\n" + "="*30)
-
-print(f"Mejor solución encontrada: {best_solution}")
 
 print(f"Resultado esperado: {FITNESS_GOAL:.5f}")
 print(f"Precisión: {precision_respecto_objetivo:.2f}%")

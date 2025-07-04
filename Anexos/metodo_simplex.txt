@@ -57,11 +57,15 @@ max
 
 #NEMESIS (PEQUEÑOS DETALLES EN LA TABLA FINAL)
 
+3
+3
 3*x1 + 1*x2 + 5*x3 <= 60
 1*x1 + 2*x2 + 3*x3 >= 40
 2*x1 + 3*x2 + 1*x3 <= 50
 7*x1 + 2*x2 + 3*x3
 min
+
+
 -40 (esta en - por el cambio de signo)
 
 #minimizacion mixto 3x3 
@@ -110,6 +114,8 @@ min
 FALTA ESTEXDD
 ###minimizacion 4x4
 
+4
+4
 60*x1 + 60*x2 + 50*x3 + 10*x4 >= 200
 12*x1 + 6*x2 + 4*x3 + 18*x4 >= 36 
 1*x1 + 12*x2 + 4*x3 + 8*x4 >= 18 

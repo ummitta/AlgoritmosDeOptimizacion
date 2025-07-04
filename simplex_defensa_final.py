@@ -11,14 +11,16 @@ epsilon = sys.float_info.epsilon
 np.set_printoptions(suppress=True, precision=2)
 
 def hay_negativos_validos(filaZ, columnasLetras, fase, tablero):
+    epsilon = 1e-7
     for i, valor in enumerate(filaZ):
         col_name = columnasLetras[i + 1]  # +1 por el desplazamiento por Z
-        if valor < 0:
+        if valor < -epsilon:
             if fase == "2fases" and col_name.startswith('a'):
                 return True
             if fase in ("simplex", "mixto") and (col_name.startswith('x') or col_name.startswith('h')):
                 return True
     return False
+
 
 def FormaAmpliada(A, b, c, ci, signos, obj, metodo, filasLetras, columnasLetras):
     zValor = 0
@@ -375,7 +377,7 @@ def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
     while aux: #maximizacion menor igual
         zFuncion = AA[0, 1:-1]
         aux = hay_negativos_validos(zFuncion, columnasLetras, procedimiento, AA)
-        if not aux and procedimiento == "2fases": # minimizacion mayor igual
+        if not aux and procedimiento == "2fases":
             print("SIMPLEX 2 FASES DETECTADO")
             AA = elimVarArtificiales(AA, filasLetras, columnasLetras)
             AA = reconstruirSimplex2(AA, c, obj, filasLetras, columnasLetras)
@@ -386,31 +388,40 @@ def Simplex(A, b, c, ci, signos, obj, filasLetras, columnasLetras):
             AA = Pivoteo2(AA,filasLetras,columnasLetras)
             print("Despues de pivoteo 2")
             ImprimirTabla(AA,filasLetras,columnasLetras)
-            aux = True
-            AA = Pivoteo3(AA,filasLetras,columnasLetras)
-            print("Despues de pivoteo 3")
-            ImprimirTabla(AA,filasLetras,columnasLetras)
+
+            # SOLO SI HAY NEGATIVOS
+            zFuncion = AA[0, 1:-1]
+            aux = hay_negativos_validos(zFuncion, columnasLetras, procedimiento, AA)
+            if aux:
+                AA = Pivoteo3(AA,filasLetras,columnasLetras)
+                print("Despues de pivoteo 3")
+                ImprimirTabla(AA,filasLetras,columnasLetras)
+                # Vuelve a revisar por si acaso
+                zFuncion = AA[0, 1:-1]
+                aux = hay_negativos_validos(zFuncion, columnasLetras, procedimiento, AA)
             continue
+
 
         if not aux and procedimiento == "mixto" and obj == "min":
             print("cambiando a simplex mixto (min)")
             print("AA :", AA)
             AA = elimVarArtificiales(AA, filasLetras, columnasLetras)
             procedimiento = "simplex"
-            
-            print("AA :", AA)
-            # Pasar c como está, sin modificarlo más
-            #c = -1*c #si sale positivo no se borra, pero sino se borra
             AA = reconstruirSimplex(AA, c, "min", filasLetras, columnasLetras,procedimiento)
             print("AA: ", AA)
             AA = Pivoteo2(AA,filasLetras,columnasLetras)
             print("Despues de pivoteo 2")
             ImprimirTabla(AA,filasLetras,columnasLetras)
-            aux = True
-            AA = Pivoteo3(AA,filasLetras,columnasLetras)
-            print("Despues de pivoteo 3")
-            ImprimirTabla(AA,filasLetras,columnasLetras)
+            zFuncion = AA[0, 1:-1]
+            aux = hay_negativos_validos(zFuncion, columnasLetras, procedimiento, AA)
+            if aux:
+                AA = Pivoteo3(AA,filasLetras,columnasLetras)
+                print("Despues de pivoteo 3")
+                ImprimirTabla(AA,filasLetras,columnasLetras)
+                zFuncion = AA[0, 1:-1]
+                aux = hay_negativos_validos(zFuncion, columnasLetras, procedimiento, AA)
             continue
+
 
         if not aux and procedimiento == "mixto" and obj == "max":
             print("cambiando a simplex mixto (max)")

@@ -1,288 +1,204 @@
-import random as ra, math as ma, time as ti, requests as req, pandas as pd, numpy as np, statistics as st, matplotlib.pyplot as plt, scipy.spatial as sp
+import json
+import numpy as np
+import random
+from time import time
+from numpy.linalg import norm
+from statistics import mean, stdev
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from scipy.spatial import ConvexHull
+# =================== CONFIGURACIÓN ===================
+TAM_POBLACION = 38
+TAM_COALICION = 217
+GENERACIONES_MAX = 15000
+TORNEO_K = 5
+PROB_CRUCE = 0.8
+PROB_MUTACION = 0.1700019
+ESTANCAMIENTO_MAX = 200
+NUM_RUNS = 10
 
-def download_file(url, local_filename):
-    with req.get(url, stream=True) as r:
-        r.raise_for_status()
-        with open(f'.\Anexos\{local_filename}', 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                f.write(chunk)
-    return f
+# ==================== LECTURA DE DATOS ====================
+with open("../Anexos/datos.json", 'r', encoding='utf-16') as f:
+    data = json.load(f)
 
-members = pd.read_csv(".\Anexos\HSall_members.csv", encoding="utf-8")
+votes = data['rollcalls'][0]['votes']
+N = len(votes)
+COORDS = np.array([(v['x'], v['y']) for v in votes], dtype=float)
 
-votes = pd.read_csv(".\Anexos\RH0941234.csv", encoding="utf-8")
+# Matriz de distancias euclidianas
+diff_x = COORDS[:, 0][:, None] - COORDS[:, 0]
+diff_y = COORDS[:, 1][:, None] - COORDS[:, 1]
 
-# cast_code == 0  → no era miembro aún
-# cast_code == 1  → votó a favor
-# cast_code == 2  → votó en contra
-# cast_code == 3  → se abstuvo
-# cast_code == 9  → estaba ausente / no votó
+dist_matrix = np.sqrt(diff_x**2 + diff_y**2)
+todos_indices = list(range(N))
 
-# Nos quedamos sólo con quienes realmente participaron
-votacion_filtrada = votes[~votes["cast_code"].isin([0, 9])]
-icpsr_presentes = votacion_filtrada["icpsr"].unique()
-
-# El congreso 94 corresponde al período 1975-1976
-# Filtrando datos de los miembros del Congreso 94
-
-CONGRESS   = 94          # El prefijo RH094… indica 94.º Congreso
-ROLLNUMBER = 1234        # Número de roll-call dentro del Congreso
-
-members = members[members["icpsr"].isin(icpsr_presentes)]
-
-members = members[members["congress"] == CONGRESS]
-
-votacion_filtrada = votacion_filtrada[votacion_filtrada["icpsr"].isin(members["icpsr"])]
-
-votacion_filtrada = votacion_filtrada[["icpsr", "cast_code"]]
-
-combinado = pd.merge(votacion_filtrada, members, on="icpsr", how="inner")
-
-coords = list(zip(combinado["nominate_dim1"], combinado["nominate_dim2"]))
-
-# ALGORITMO GENETICO PARA LA COALICIÓN DE REPRESENTANTES
-# Este código implementa un algoritmo genético para encontrar una coalición de representantes
-# que minimice la distancia euclidiana entre sus miembros, respetando la restricción de tamaño de la coalición.
-# El objetivo es seleccionar 216 representantes de un total de 431, de modo que la suma de las distancias
-# euclidianas entre todos los pares de miembros de la coalición sea mínima.
-# Este código sigue los pasos del algoritmo genético:
-# 1. Generar una población inicial aleatoria de cromosomas (soluciones candidatas).
-# 2. Evaluar cada cromosoma calculando su fitness (suma de distancias).
-# 3. Seleccionar padres mediante un método de selección (ruleta por ranking).
-# 4. Realizar cruza de un punto para generar nuevos hijos.
-# 5. Mutar los hijos con una probabilidad dada (intercambio de bits).
-# 6. Verificar que los hijos cumplen la restricción de tamaño de la coalición.
-# 7. Reemplazar la población con los nuevos hijos y repetir hasta alcanzar un criterio de parada.
-
-N_REPRESENTANTES = len(coords)  # número total de representantes
-Q = N_REPRESENTANTES//2 + 1     # tamaño de la coalición (mayoría absoluta)
-TAM_POBLACION = 38              # tamaño de la población (número de cromosomas)
-PROB_MUTACION = 0.17            # probabilidad de mutación por cromosoma (aprox 17%)
-P_SELECCION = 0.141             # parámetro de selección para ruleta por ranking
-
-# Supongamos que 'coords' es una lista de tamaño 431 donde cada elemento coords[i] = (X_i, Y_i)
-# representando las coordenadas DW-Nominate del representante i-ésimo en la votación.
-# Estas coordenadas deben ser cargadas antes de ejecutar el GA (p.ej., desde un archivo de datos).
-# coords = [...]  # Lista de tuplas (x,y) de longitud 431
-
-def generar_poblacion_inicial(n, q, tam_pob):
-    poblacion = []
-    for _ in range(tam_pob):
-        indices_unos = ra.sample(range(n), q)
-        cromosoma = [0] * n
-        for idx in indices_unos:
-            cromosoma[idx] = 1
-        poblacion.append(cromosoma)
-    return poblacion
-
-def calcular_fitness(cromosoma, coords):
-    indices = [i for i, bit in enumerate(cromosoma) if bit == 1]
-    total = 0.0
-    for i in range(len(indices) - 1):
-        for j in range(i + 1, len(indices)):
-            a = indices[i]
-            b = indices[j]
-            dx = coords[a][0] - coords[b][0]
-            dy = coords[a][1] - coords[b][1]
-            dist = ma.sqrt(dx*dx + dy*dy)
-            total += dist
-    return total
-
-def seleccionar_padres(poblacion, fitness_vals, P=P_SELECCION):
-    indices_ordenados = sorted(range(len(poblacion)), key=lambda i: fitness_vals[i])
-    poblacion_ordenada = [poblacion[i] for i in indices_ordenados]
-    pesos = []
-    total_peso = 0.0
-    for rank in range(len(poblacion_ordenada)):
-        peso = P * ((1 - P) ** rank)
-        pesos.append(peso)
-        total_peso += peso
-    pesos = [w/total_peso for w in pesos]
-    acum = []
-    acumulado = 0.0
-    for w in pesos:
-        acumulado += w
-        acum.append(acumulado)
-
-    def elegir_individuo():
-        r = ra.random()
-        for idx, valor_acum in enumerate(acum):
-            if valor_acum >= r:
-                return poblacion_ordenada[idx]
-        return poblacion_ordenada[-1]
-    padre1 = elegir_individuo()
-    padre2 = elegir_individuo()
-    while padre2 is padre1:
-        padre2 = elegir_individuo()
-    return padre1, padre2
-
-def cruzar(padre1, padre2):
-    n = len(padre1)
-    punto_corte = ra.randint(1, n-1)
-    hijo1 = padre1[:punto_corte] + padre2[punto_corte:]
-    hijo2 = padre2[:punto_corte] + padre1[punto_corte:]
-    return hijo1, hijo2
-
-def mutar(cromosoma, prob_mut=PROB_MUTACION):
-    if ra.random() < prob_mut:
-        indices_uno = [i for i, bit in enumerate(cromosoma) if bit == 1]
-        indices_cero = [i for i, bit in enumerate(cromosoma) if bit == 0]
-
-        # Verificación robusta
-        if len(indices_uno) > 0 and len(indices_cero) > 0:
-            idx1 = ra.choice(indices_uno)
-            idx0 = ra.choice(indices_cero)
-            cromosoma[idx1], cromosoma[idx0] = 0, 1
-        else:
-            # Fuerza una nueva mutación válida al regenerar uno de los grupos
-            # (esto rara vez debería pasar si las restricciones se cumplen)
-            cromosoma = verificar_restriccion(cromosoma)
-    return cromosoma
-
-def verificar_restriccion(cromosoma, q=Q):
-    ones = sum(cromosoma)
-    if ones > q:
-        indices_uno = [i for i, bit in enumerate(cromosoma) if bit == 1]
-        excedentes = ones - q
-        apagar = ra.sample(indices_uno, excedentes)
-        for idx in apagar:
-            cromosoma[idx] = 0
-    elif ones < q:
-        indices_cero = [i for i, bit in enumerate(cromosoma) if bit == 0]
-        faltantes = q - ones
-        encender = ra.sample(indices_cero, faltantes)
-        for idx in encender:
-            cromosoma[idx] = 1
-    return cromosoma
-
-def algoritmo_genetico(coords, max_iter=10000):
-    iteraciones = 0
-    poblacion = generar_poblacion_inicial(N_REPRESENTANTES, Q, TAM_POBLACION)
-    fitness_vals = [calcular_fitness(crom, coords) for crom in poblacion]
-    best_fit = min(fitness_vals)
-    best_solution = poblacion[fitness_vals.index(best_fit)]
-    historial_fitness = [best_fit]
-
-    while iteraciones < max_iter:
-        nueva_poblacion = []
-        while len(nueva_poblacion) < N_REPRESENTANTES:
-            iteraciones += 1
-            padre1, padre2 = seleccionar_padres(poblacion, fitness_vals)
-
-            hijo1, hijo2 = cruzar(padre1, padre2)
-
-            hijo1 = mutar(hijo1, PROB_MUTACION)
-            hijo2 = mutar(hijo2, PROB_MUTACION)
-
-            hijo1 = verificar_restriccion(hijo1, Q)
-            hijo2 = verificar_restriccion(hijo2, Q)
-
-            nueva_poblacion.append(hijo1)
-
-            if len(nueva_poblacion) < N_REPRESENTANTES:
-                nueva_poblacion.append(hijo2)
-
-        poblacion = nueva_poblacion
-
-        fitness_vals = [calcular_fitness(crom, coords) for crom in poblacion]
-
-        current_best = min(fitness_vals)
-
-        historial_fitness.append(current_best)
-
-        if current_best < best_fit:
-            best_fit = current_best
-            best_solution = poblacion[fitness_vals.index(current_best)]
-    
-        if best_fit <= 9686.93831:
-            break
-
-    return best_solution, best_fit, iteraciones, historial_fitness
-
-# Ejecución del algoritmo genético
-
-N_RUNS = 10 # Número de ejecuciones del algoritmo genético para obtener estadísticas
 FITNESS_GOAL = 9686.93831
 
-fitness_list = []
-time_list = []
-iter_list = []
-fitness_historial_total = []
-n_iteraciones = 0
+# =================== GUARDADO DE RESULTADOS ===================
+def guardar_resultados(rdol, ruta="./../Anexos/CMGO.json"):
+    try:
+        with open(ruta, "r") as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.decoder.JSONDecodeError):
+        data = {}
+    if "datos" not in data or not isinstance(data["datos"], list):
+        data["datos"] = []
+    data["datos"].append(rdol)
+    with open(ruta, "w") as f:
+        json.dump(data, f, indent=4)
+    print("Resultados guardados correctamente.")
 
-for run in range(N_RUNS):
-    print(f"\nEjecución {run + 1} de {N_RUNS}...")
+# =================== FUNCIÓN FITNESS ===================
+def calcular_fitness(indices_coalicion):
+    idx = np.array(indices_coalicion, dtype=int)
+    submat = dist_matrix[np.ix_(idx, idx)]
+    total = submat.sum() / 2.0
+    return total
 
-    t0 = ti.time()
-    best_solution, best_fit, iteraciones, historial_fitness = algoritmo_genetico(coords)
-    t1 = ti.time()
+# =================== POBLACIÓN INICIAL ===================
+def generar_poblacion_inicial():
+    return [random.sample(todos_indices, TAM_COALICION) for _ in range(TAM_POBLACION)]
 
-    fitness_list.append(best_fit)
-    print(f"iter:", iteraciones)
-    n_iteraciones += iteraciones
-    iter_list.append(iteraciones)
-    
-    time = t1 - t0
-    print("time", time)
-    time_list.append(time)    
-    fitness_historial_total.append(historial_fitness)
+# =================== SELECCIÓN POR TORNEO ===================
+def seleccionar_padre_torneo(aptitudes, k=TORNEO_K):
+    participantes = random.sample(range(len(aptitudes)), k)
+    ganador = min(participantes, key=lambda i: aptitudes[i]) # el mejor de los seleccionados por torneo
+    return ganador
+
+# =================== CRUZA ===================
+def cruzar(parent1, parent2):
+    set_hijo = set()
+    num_tomar = TAM_COALICION // 2
+    seleccionados_p1 = random.sample(parent1, num_tomar)
+    set_hijo.update(seleccionados_p1)
+    for gen in parent2:
+        if len(set_hijo) >= TAM_COALICION:
+            break
+        set_hijo.add(gen)
+    if len(set_hijo) < TAM_COALICION:
+        faltantes = TAM_COALICION - len(set_hijo)
+        disponibles = [idx for idx in range(N) if idx not in set_hijo]
+        set_hijo.update(random.sample(disponibles, faltantes))
+    return list(set_hijo)
+
+# =================== MUTACIÓN ===================
+def mutar(individuo):
+    if random.random() < PROB_MUTACION:
+        coalicion_set = set(individuo)
+        dentro = random.choice(individuo)
+        fuera = random.choice([idx for idx in range(N) if idx not in coalicion_set])
+        nuevo = individuo.copy()
+        nuevo.remove(dentro)
+        nuevo.append(fuera)
+        return nuevo
+    return individuo
+
+# =================== ALGORITMO GENÉTICO (UNA RUN) ===================
+def algoritmo_genetico(seed=None):
+    if seed is not None:
+        random.seed(seed)
+        np.random.seed(seed)
+
+    poblacion = generar_poblacion_inicial()
+    aptitudes = [calcular_fitness(ind) for ind in poblacion]
+    mejor_aptitud = min(aptitudes)
+    mejor_coalicion = poblacion[aptitudes.index(mejor_aptitud)]
+    historial_fitness = [mejor_aptitud]
+
+    generacion, sin_mejora = 0, 0
+
+    t0 = time()
+    total_iteraciones = 0
+
+    while generacion < GENERACIONES_MAX and sin_mejora < ESTANCAMIENTO_MAX:
+        generacion += 1
+        nueva_poblacion = []
+        nueva_poblacion.append(mejor_coalicion.copy())
+        while len(nueva_poblacion) < TAM_POBLACION:
+            idx_p1 = seleccionar_padre_torneo(aptitudes)
+            idx_p2 = seleccionar_padre_torneo(aptitudes)
+            padre1, padre2 = poblacion[idx_p1], poblacion[idx_p2]
+            hijo = cruzar(padre1, padre2) if random.random() < PROB_CRUCE else (padre1 if aptitudes[idx_p1] <= aptitudes[idx_p2] else padre2)
+            hijo = mutar(hijo)
+            nueva_poblacion.append(hijo)
+        poblacion = nueva_poblacion
+        aptitudes = [calcular_fitness(ind) for ind in poblacion]
+        total_iteraciones += TAM_POBLACION
+        gen_mejor_aptitud = min(aptitudes)
+        gen_mejor_coalicion = poblacion[aptitudes.index(gen_mejor_aptitud)]
+        historial_fitness.append(gen_mejor_aptitud)
+        if gen_mejor_aptitud < mejor_aptitud:
+            mejor_aptitud = gen_mejor_aptitud
+            mejor_coalicion = gen_mejor_coalicion.copy()
+            sin_mejora = 0
+        else:
+            sin_mejora += 1
+    tiempo = time() - t0
+    return mejor_aptitud, tiempo, generacion, mejor_coalicion, historial_fitness
+
+# =================== MAIN ===================
+def main():
+    fitness_list, tiempos, iteraciones, coaliciones, historiales = [], [], [], [], []
+    historial_fitness_total = []
+    with ProcessPoolExecutor() as executor:
+        futures = [executor.submit(algoritmo_genetico, i) for i in range(NUM_RUNS)]
+        for f in as_completed(futures):
+            fit, t, iters, coal, hist = f.result()
+            fitness_list.append(fit)
+            tiempos.append(t)
+            iteraciones.append(iters)
+            coaliciones.append(coal)
+            historiales.append(hist)
+            #promedio del historial de fitness
+            historial_fitness_total.append(mean(hist))
+            print("historial_fitness_total:", historial_fitness_total)
+            print(f"Run completed: Fitness={fit:.5f}, Time={t:.2f}s, Iterations={iters}, Coalición={coal[:5]}, hist={hist[:5]}")  # Muestra los primeros 5 elementos de la coalición
 
 
-# Estadisticas
-fitness_mean = st.mean(fitness_list)    # promedio de fitness obtenidos a partir de una ejecucion del algoritmo genético (N_RUNS veces)
-iters_mean = n_iteraciones / N_RUNS     # promedio de iteraciones obtenidas a partir de una ejecucion del algoritmo genético (N_RUNS veces)
-time_mean = st.mean(time_list)          # promedio de tiempos obtenidos a partir de una ejecucion del algoritmo genético (N_RUNS veces)
+    # Estadísticas generales
 
-fitness_historial_total = [item for sublist in fitness_historial_total for item in sublist] # promedio de cada una de las iteraciones de fitness obtenidas a partir de una ejecucion del algoritmo genético mean(alg_gen)*(N_RUNS veces)
-fitness_historial_mean = st.mean(fitness_historial_total) # promedio del promedio de fitnesses 
+    fitness_historial_mean = mean(historial_fitness_total)
 
-precision_respecto_objetivo = (1 - abs(FITNESS_GOAL - fitness_historial_mean) / FITNESS_GOAL) * 100
+    precision_respecto_objetivo = (1 - abs(FITNESS_GOAL - fitness_historial_mean) / FITNESS_GOAL) * 100
+    fitness_arr = np.array(fitness_list)
+    precision_arr = (FITNESS_GOAL / fitness_arr) * 100
 
-desviacion_fitness_respecto_objetivo = (sum((f - FITNESS_GOAL) ** 2 for f in fitness_list) / len(fitness_list)) ** 0.5 # desviación estándar del fitness promedio
+    print("\n\n===== CONFIGURACION =====")
 
-time = sum(time_list) / len(time_list)
-print("time", time)
+    print(f"Tamaño población: {TAM_POBLACION}")
+    print(f"Tamaño coalición: {TAM_COALICION}")
+    print(f"Generaciones máximas: {GENERACIONES_MAX}")
+    print(f"Torneo K: {TORNEO_K}")
+    print(f"Probabilidad de cruce: {PROB_CRUCE}")
+    print(f"Probabilidad de mutación: {PROB_MUTACION}")
+    print(f"Estancamiento máximo: {ESTANCAMIENTO_MAX}")
+    print(f"Número de runs: {NUM_RUNS}")
+    print(f"Fitness objetivo: {FITNESS_GOAL:.5f}")
+    print(f"Seed: {random.getstate()[1][0]}")
 
-print("Historial de fitness promedio:", fitness_historial_mean)
+    print("\n\n===== Reporte de Resultados =====")
+    print(f"Resultado esperado: {FITNESS_GOAL}")
+    print(f"Fitness promedio: {fitness_arr.mean():.5f}")
+    print(f"Fitness mínimo (mejor run): {fitness_arr.min():.5f}")
+    print(f"Desviación estándar fitness: {fitness_arr.std():.5f}")
 
-print("\n" + "="*30 + "\nREPORTE DE RESULTADOS\n" + "="*30)
+    print(f"Precisión promedio: {precision_respecto_objetivo:.2f} %")
+    print(f"Desviación estándar precisión: {precision_arr.std():.2f} %")
 
-print(f"Resultado esperado: {FITNESS_GOAL:.5f}")
-print(f"Precisión: {precision_respecto_objetivo:.2f}%")
-print(f"Desviación estándar del fitness: {desviacion_fitness_respecto_objetivo:.5f}")
-print(f"Promedio iteraciones: {iters_mean:.2f}")
-print(f"Desviación estándar de iteraciones: {st.stdev(iter_list):.2f}")
-print(f"Tiempo promedio (s): {time_mean:.4f}")
-print(f"Desviación estándar del tiempo: {st.stdev(time_list):.4f}")
+    print(f"Promedio de iteraciones: {np.mean(iteraciones):.2f}")
+    print(f"Desviación estándar iteraciones: {np.std(iteraciones):.2f}")
 
-print("="*30 + "\nFIN DEL REPORTE\n" + "="*30)
+    print(f"Promedio tiempo (s): {np.mean(tiempos):.2f}")
+    print(f"Desviación estándar tiempo: {np.std(tiempos):.2f}")
 
-# Visualización de los resultados
+    # Guardar la mejor coalición
+    mejor_run_idx = int(np.argmin(fitness_list))
+    mejor_coalicion = coaliciones[mejor_run_idx]
+    resultado = {
+        "mejor_coalicion": mejor_coalicion,
+        "votes": votes
+    }
+    with open("../Anexos/CMGO.json", "w", encoding="utf-8") as f:
+        json.dump(resultado, f, ensure_ascii=False, indent=2)
 
-def partido_a_color(party_code):
-    return 'blue' if party_code == 100 else 'red'
-
-colores = combinado["party_code"].apply(partido_a_color).values
-
-combinado["CGM"] = best_solution 
-
-x = combinado["nominate_dim1"].values
-y = combinado["nominate_dim2"].values
-
-es_CGM = combinado["CGM"] == 1
-no_CGM = ~es_CGM
-
-plt.figure(figsize=(8,8))
-plt.scatter(x[no_CGM], y[no_CGM], c=colores[no_CGM], marker='x', label='No pertenece')
-plt.scatter(x[es_CGM], y[es_CGM], c=colores[es_CGM], marker='o', edgecolor='k', s=40, label='Pertenece')
-
-coords_CGM = np.column_stack((x[es_CGM], y[es_CGM]))
-hull = ConvexHull(coords_CGM)
-for simplex in hull.simplices:
-    plt.plot(coords_CGM[simplex, 0], coords_CGM[simplex, 1], 'm-')
-
-plt.fill(coords_CGM[hull.vertices,0], coords_CGM[hull.vertices,1], 'm', alpha=0.15)
-
-plt.show()
+if __name__ == "__main__":
+    main()

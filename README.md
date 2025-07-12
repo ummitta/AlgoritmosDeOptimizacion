@@ -1,7 +1,7 @@
-# Algoritmos
+# AlgoritmoGenetico
 
-python -m venv venv
-source venv/bin/activate
+hola compañeros
+
 pip install -r requirements.txt
 
-python3 archivo.py
+python main.py
